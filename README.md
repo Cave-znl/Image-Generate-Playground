@@ -1,6 +1,6 @@
 # Image Generate Playground
 
-一个基于 Next.js 的自托管图像生成与编辑工作台，用于对接 GPT Image 系列模型以及 OpenAI 兼容的图像生成接口。
+一个基于 Next.js 的自托管图像生成与编辑工作台，用于对接 GPT Image、Grok 图像模型以及 OpenAI 兼容的图像生成接口。
 
 本项目基于 [alasano/gpt-image-playground](https://github.com/alasano/gpt-image-playground) 进行二次开发。感谢原作者提供的基础界面、图像生成/编辑流程、历史记录与存储能力。本仓库会在此基础上继续加入更多模型适配、中文化体验、提示词库、登录与访问控制等能力。
 
@@ -10,9 +10,24 @@ Image Generate Playground 更偏向个人或团队自部署场景：
 
 - 统一管理图像生成、图像编辑、参数调试和历史记录
 - 支持 OpenAI 兼容接口，可配置自定义 API Base URL
-- 默认使用 `gpt-image-2`
+- 支持 GPT 与 Grok 图像模型，并可为不同模型配置不同 API Key
+- 支持中英文界面与 dark/light 主题切换
 - 支持本地服务器部署，也可按需适配 serverless 平台
-- 后续会逐步增强中文工作流、模型切换和权限控制
+- 后续会逐步增强中文工作流、提示词库、登录系统和权限控制
+
+## 当前支持模型
+
+生成模式：
+
+- `gpt-image-2`
+- `grok-imagine-image`
+
+编辑模式：
+
+- `gpt-image-2`
+- `grok-imagine-image-edit`
+
+说明：Grok 模型通过 OpenAI 兼容格式请求当前配置的中转接口。`gpt-image-2` 使用 `OPENAI_API_KEY`，Grok 模型使用 `GROK_API_KEY`。
 
 ## 当前能力
 
@@ -21,6 +36,9 @@ Image Generate Playground 更偏向个人或团队自部署场景：
 - 蒙版编辑：支持通过蒙版限定编辑区域
 - 参数控制：尺寸、质量、格式、压缩、背景、审核、生成数量等
 - 自定义尺寸：支持 `gpt-image-2` 的 2K/4K 与自定义分辨率
+- 下载原图：可直接下载当前选中的最终原图
+- 中英文切换：支持中文和英文界面
+- 主题切换：支持 dark/light 模式
 - 历史记录：保存生成参数、图片结果与费用估算
 - 存储模式：
   - `fs`：图片保存到服务器 `generated-images` 目录
@@ -33,7 +51,6 @@ Image Generate Playground 更偏向个人或团队自部署场景：
 后续计划包括：
 
 - 新增更多图像模型和兼容接口适配
-- 增加中文界面选项
 - 增加提示词库与提示词模板管理
 - 增加登录选项与更完整的访问控制
 - 优化移动端与中文使用体验
@@ -62,7 +79,8 @@ npm install
 创建 `.env.local`：
 
 ```dotenv
-OPENAI_API_KEY=your_api_key_here
+OPENAI_API_KEY=your_gpt_api_key_here
+GROK_API_KEY=your_grok_api_key_here
 OPENAI_API_BASE_URL=https://your-compatible-api.example.com/v1
 NEXT_PUBLIC_IMAGE_STORAGE_MODE=fs
 
@@ -126,12 +144,13 @@ location / {
 
 | 变量 | 必填 | 说明 |
 | --- | --- | --- |
-| `OPENAI_API_KEY` | 是 | 图像接口密钥 |
+| `OPENAI_API_KEY` | 是 | GPT 图像模型接口密钥 |
+| `GROK_API_KEY` | 否 | Grok 图像模型接口密钥，使用 `grok-imagine-image` 或 `grok-imagine-image-edit` 时需要 |
 | `OPENAI_API_BASE_URL` | 否 | OpenAI 兼容接口地址，不填则使用默认 OpenAI 接口 |
 | `NEXT_PUBLIC_IMAGE_STORAGE_MODE` | 否 | 图片存储模式，支持 `fs` 或 `indexeddb` |
 | `APP_PASSWORD` | 否 | 设置后前端请求需要输入访问密码 |
 
-注意：不要把 `OPENAI_API_KEY`、`APP_PASSWORD` 写入任何 `NEXT_PUBLIC_` 开头的变量。
+注意：不要把 `OPENAI_API_KEY`、`GROK_API_KEY`、`APP_PASSWORD` 写入任何 `NEXT_PUBLIC_` 开头的变量。
 
 ## 安全提示
 

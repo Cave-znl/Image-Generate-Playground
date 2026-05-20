@@ -24,7 +24,7 @@ export function validateGptImage2Size(width: number, height: number): SizeValida
     const long = Math.max(width, height);
     const short = Math.min(width, height);
     if (long / short > GPT_IMAGE_2_MAX_ASPECT) {
-        return { valid: false, reason: `Aspect ratio (long:short) must be ≤ ${GPT_IMAGE_2_MAX_ASPECT}:1.` };
+        return { valid: false, reason: `Aspect ratio (long:short) must be <= ${GPT_IMAGE_2_MAX_ASPECT}:1.` };
     }
     const pixels = width * height;
     if (pixels < GPT_IMAGE_2_MIN_PIXELS) {
@@ -65,5 +65,5 @@ export function getPresetTooltip(preset: SizePreset, model: GptImageModel): stri
     const [w, h] = dims.split('x').map(Number);
     const mp = ((w * h) / 1_000_000).toFixed(1);
     const ratio = preset === 'square' ? '1:1' : preset === 'landscape' ? '3:2' : '2:3';
-    return `${w} × ${h} · ${ratio} · ${mp} MP`;
+    return `${w} x ${h} - ${ratio} - ${mp} MP`;
 }

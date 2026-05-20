@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import path from 'path';
+import { isEditImageModel, isGenerateImageModel } from '@/lib/cost-utils';
 
 // Streaming event types
 type StreamingEvent = {
@@ -22,11 +23,6 @@ type StreamingEvent = {
     }>;
     error?: string;
 };
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    baseURL: process.env.OPENAI_API_BASE_URL
-});
 
 const outputDir = path.resolve(process.cwd(), 'generated-images');
 
@@ -73,13 +69,29 @@ function sha256(data: string): string {
     return crypto.createHash('sha256').update(data).digest('hex');
 }
 
+function getApiKeyForModel(model: string): string | undefined {
+    if (model.startsWith('grok-')) {
+        return process.env.GROK_API_KEY;
+    }
+
+    return process.env.OPENAI_API_KEY;
+}
+
+function createImageClient(model: string): OpenAI {
+    const apiKey = getApiKeyForModel(model);
+    if (!apiKey) {
+        const envName = model.startsWith('grok-') ? 'GROK_API_KEY' : 'OPENAI_API_KEY';
+        throw new Error(`Server configuration error: ${envName} is not set.`);
+    }
+
+    return new OpenAI({
+        apiKey,
+        baseURL: process.env.OPENAI_API_BASE_URL
+    });
+}
+
 export async function POST(request: NextRequest) {
     console.log('Received POST request to /api/images');
-
-    if (!process.env.OPENAI_API_KEY) {
-        console.error('OPENAI_API_KEY is not set.');
-        return NextResponse.json({ error: 'Server configuration error: API key not found.' }, { status: 500 });
-    }
     try {
         let effectiveStorageMode: 'fs' | 'indexeddb';
         const explicitMode = process.env.NEXT_PUBLIC_IMAGE_STORAGE_MODE;
@@ -119,19 +131,23 @@ export async function POST(request: NextRequest) {
 
         const mode = formData.get('mode') as 'generate' | 'edit' | null;
         const prompt = formData.get('prompt') as string | null;
-        const model =
-            (formData.get('model') as
-                | 'gpt-image-1'
-                | 'gpt-image-1-mini'
-                | 'gpt-image-1.5'
-                | 'gpt-image-2'
-                | null) || 'gpt-image-2';
+        const model = (formData.get('model') as string | null) || 'gpt-image-2';
 
         console.log(`Mode: ${mode}, Model: ${model}, Prompt: ${prompt ? prompt.substring(0, 50) + '...' : 'N/A'}`);
 
         if (!mode || !prompt) {
             return NextResponse.json({ error: 'Missing required parameters: mode and prompt' }, { status: 400 });
         }
+
+        if (mode === 'generate' && !isGenerateImageModel(model)) {
+            return NextResponse.json({ error: `Model ${model} is not supported for image generation.` }, { status: 400 });
+        }
+
+        if (mode === 'edit' && !isEditImageModel(model)) {
+            return NextResponse.json({ error: `Model ${model} is not supported for image editing.` }, { status: 400 });
+        }
+
+        const openai = createImageClient(model);
 
         // Check for streaming mode
         const streamEnabled = formData.get('stream') === 'true';
@@ -153,7 +169,7 @@ export async function POST(request: NextRequest) {
                 (formData.get('moderation') as OpenAI.Images.ImageGenerateParams['moderation']) || 'auto';
 
             const baseParams = {
-                model,
+                model: model as OpenAI.Images.ImageGenerateParams['model'],
                 prompt,
                 n: Math.max(1, Math.min(n || 1, 10)),
                 size,
@@ -299,7 +315,7 @@ export async function POST(request: NextRequest) {
             const maskFile = formData.get('mask') as File | null;
 
             const baseEditParams = {
-                model,
+                model: model as OpenAI.Images.ImageEditParams['model'],
                 prompt,
                 image: imageFiles,
                 n: Math.max(1, Math.min(n || 1, 10)),

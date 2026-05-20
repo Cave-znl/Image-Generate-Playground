@@ -130,24 +130,9 @@ function HistoryPanelImpl({
                                         <li>Image Input: $8 / 1M tokens</li>
                                         <li>Image Output: $30 / 1M tokens</li>
                                     </ul>
-                                    <p className='mt-2 font-medium'>gpt-image-1.5:</p>
-                                    <ul className='list-disc pl-4'>
-                                        <li>Text Input: $5 / 1M tokens</li>
-                                        <li>Image Input: $8 / 1M tokens</li>
-                                        <li>Image Output: $32 / 1M tokens</li>
-                                    </ul>
-                                    <p className='mt-2 font-medium'>gpt-image-1:</p>
-                                    <ul className='list-disc pl-4'>
-                                        <li>Text Input: $5 / 1M tokens</li>
-                                        <li>Image Input: $10 / 1M tokens</li>
-                                        <li>Image Output: $40 / 1M tokens</li>
-                                    </ul>
-                                    <p className='mt-2 font-medium'>gpt-image-1-mini:</p>
-                                    <ul className='list-disc pl-4'>
-                                        <li>Text Input: $2 / 1M tokens</li>
-                                        <li>Image Input: $2.50 / 1M tokens</li>
-                                        <li>Image Output: $8 / 1M tokens</li>
-                                    </ul>
+                                    <p className='mt-2'>
+                                        Grok model costs are not estimated because this deployment uses an OpenAI-compatible relay.
+                                    </p>
                                 </div>
                                 <div className='space-y-2 py-4 text-sm text-neutral-300'>
                                     <div className='flex justify-between'>
@@ -292,8 +277,9 @@ function HistoryPanelImpl({
                                                     </DialogHeader>
                                                     {(() => {
                                                         const modelForRates: GptImageModel = (item.model ||
-                                                            'gpt-image-1') as GptImageModel;
+                                                            'gpt-image-2') as GptImageModel;
                                                         const rates = getModelRates(modelForRates);
+                                                        if (!rates) return null;
                                                         return (
                                                             <>
                                                                 <div className='space-y-1 pt-1 text-xs text-neutral-400'>
@@ -386,7 +372,7 @@ function HistoryPanelImpl({
                                             {formatDuration(item.durationMs)}
                                         </p>
                                         <p>
-                                            <span className='font-medium text-white/80'>Model:</span> {item.model || 'gpt-image-1'}
+                                            <span className='font-medium text-white/80'>Model:</span> {item.model || 'gpt-image-2'}
                                         </p>
                                         <p>
                                             <span className='font-medium text-white/80'>Quality:</span> {item.quality}

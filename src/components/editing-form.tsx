@@ -43,7 +43,7 @@ type DrawnPoint = {
     size: number;
 };
 
-import type { GptImageModel } from '@/lib/cost-utils';
+import { EDIT_IMAGE_MODELS, type EditImageModel } from '@/lib/cost-utils';
 import type { SizePreset } from '@/lib/size-utils';
 
 export type EditingFormData = {
@@ -55,7 +55,7 @@ export type EditingFormData = {
     quality: 'low' | 'medium' | 'high' | 'auto';
     imageFiles: File[];
     maskFile: File | null;
-    model: GptImageModel;
+    model: EditImageModel;
 };
 
 type EditingFormProps = {
@@ -546,18 +546,11 @@ export function EditingForm({
                                     <SelectValue placeholder={t('selectModel')} />
                                 </SelectTrigger>
                                 <SelectContent className='border-white/20 bg-black text-white'>
-                                    <SelectItem value='gpt-image-2' className='focus:bg-white/10'>
-                                        gpt-image-2
-                                    </SelectItem>
-                                    <SelectItem value='gpt-image-1.5' className='focus:bg-white/10'>
-                                        gpt-image-1.5
-                                    </SelectItem>
-                                    <SelectItem value='gpt-image-1' className='focus:bg-white/10'>
-                                        gpt-image-1
-                                    </SelectItem>
-                                    <SelectItem value='gpt-image-1-mini' className='focus:bg-white/10'>
-                                        gpt-image-1-mini
-                                    </SelectItem>
+                                    {EDIT_IMAGE_MODELS.map((item) => (
+                                        <SelectItem key={item} value={item} className='focus:bg-white/10'>
+                                            {item}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                             {isGptImage2 && (
@@ -582,7 +575,7 @@ export function EditingForm({
                                         />
                                         <Label
                                             htmlFor='edit-enable-streaming'
-                                            className={`text-sm ${editN[0] > 1 ? 'cursor-not-allowed text-white/40' : '-'}`}>
+                                            className={`text-sm ${editN[0] > 1 ? 'cursor-not-allowed text-white/40' : 'cursor-pointer text-white/80'}`}>
                                             {t('enableStreaming')}
                                         </Label>
                                     </div>

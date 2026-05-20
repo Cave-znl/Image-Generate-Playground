@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 
-import type { GptImageModel } from '@/lib/cost-utils';
+import { GENERATE_IMAGE_MODELS, type GenerateImageModel } from '@/lib/cost-utils';
 import type { SizePreset } from '@/lib/size-utils';
 
 export type GenerationFormData = {
@@ -48,7 +48,7 @@ export type GenerationFormData = {
     output_compression?: number;
     background: 'transparent' | 'opaque' | 'auto';
     moderation: 'low' | 'auto';
-    model: GptImageModel;
+    model: GenerateImageModel;
 };
 
 type GenerationFormProps = {
@@ -232,18 +232,11 @@ export function GenerationForm({
                                     <SelectValue placeholder={t('selectModel')} />
                                 </SelectTrigger>
                                 <SelectContent className='border-white/20 bg-black text-white'>
-                                    <SelectItem value='gpt-image-2' className='focus:bg-white/10'>
-                                        gpt-image-2
-                                    </SelectItem>
-                                    <SelectItem value='gpt-image-1.5' className='focus:bg-white/10'>
-                                        gpt-image-1.5
-                                    </SelectItem>
-                                    <SelectItem value='gpt-image-1' className='focus:bg-white/10'>
-                                        gpt-image-1
-                                    </SelectItem>
-                                    <SelectItem value='gpt-image-1-mini' className='focus:bg-white/10'>
-                                        gpt-image-1-mini
-                                    </SelectItem>
+                                    {GENERATE_IMAGE_MODELS.map((item) => (
+                                        <SelectItem key={item} value={item} className='focus:bg-white/10'>
+                                            {item}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                             <Tooltip>
@@ -258,7 +251,7 @@ export function GenerationForm({
                                         />
                                         <Label
                                             htmlFor='enable-streaming'
-                                            className={`text-sm ${n[0] > 1 ? 'cursor-not-allowed text-white/40' : '-'}`}>
+                                            className={`text-sm ${n[0] > 1 ? 'cursor-not-allowed text-white/40' : 'cursor-pointer text-white/80'}`}>
                                             {t('enableStreaming')}
                                         </Label>
                                     </div>
