@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useI18n } from '@/lib/i18n';
 import { getPresetTooltip, validateGptImage2Size } from '@/lib/size-utils';
 import {
     Upload,
@@ -174,6 +175,7 @@ export function EditingForm({
     partialImages,
     setPartialImages
 }: EditingFormProps) {
+    const { t } = useI18n();
     const [firstImagePreviewUrl, setFirstImagePreviewUrl] = React.useState<string | null>(null);
 
     const isGptImage2 = editModel === 'gpt-image-2';
@@ -504,9 +506,9 @@ export function EditingForm({
     };
 
     const displayFileNames = (files: File[]) => {
-        if (files.length === 0) return 'No file selected.';
+        if (files.length === 0) return t('noFileSelected');
         if (files.length === 1) return files[0].name;
-        return `${files.length} files selected`;
+        return `${files.length} ${t('filesSelected')}`;
     };
 
     return (
@@ -514,19 +516,19 @@ export function EditingForm({
             <CardHeader className='flex items-start justify-between border-b border-white/10 pb-4'>
                 <div>
                     <div className='flex items-center'>
-                        <CardTitle className='py-1 text-lg font-medium text-white'>Edit Image</CardTitle>
+                        <CardTitle className='py-1 text-lg font-medium text-white'>{t('editImage')}</CardTitle>
                         {isPasswordRequiredByBackend && (
                             <Button
                                 variant='ghost'
                                 size='icon'
                                 onClick={onOpenPasswordDialog}
                                 className='ml-2 text-white/60 hover:text-white'
-                                aria-label='Configure Password'>
+                                aria-label={t('configurePassword')}>
                                 {clientPasswordHash ? <Lock className='h-4 w-4' /> : <LockOpen className='h-4 w-4' />}
                             </Button>
                         )}
                     </div>
-                    <CardDescription className='mt-1 text-white/60'>Modify an existing image with a text prompt.</CardDescription>
+                    <CardDescription className='mt-1 text-white/60'>{t('editDescription')}</CardDescription>
                 </div>
                 <ModeToggle currentMode={currentMode} onModeChange={onModeChange} />
             </CardHeader>
@@ -534,14 +536,14 @@ export function EditingForm({
                 <CardContent className='flex-1 space-y-5 overflow-y-auto p-4'>
                     <div className='space-y-1.5'>
                         <Label htmlFor='edit-model-select' className='text-white'>
-                            Model
+                            {t('model')}
                         </Label>
                         <div className='flex items-center gap-4'>
                             <Select value={editModel} onValueChange={(value) => setEditModel(value as EditingFormData['model'])} disabled={isLoading}>
                                 <SelectTrigger
                                     id='edit-model-select'
                                     className='w-[180px] rounded-md border border-white/20 bg-black text-white focus:border-white/50 focus:ring-white/50'>
-                                    <SelectValue placeholder='Select model' />
+                                    <SelectValue placeholder={t('selectModel')} />
                                 </SelectTrigger>
                                 <SelectContent className='border-white/20 bg-black text-white'>
                                     <SelectItem value='gpt-image-2' className='focus:bg-white/10'>
@@ -564,9 +566,7 @@ export function EditingForm({
                                         <Info className='h-4 w-4 cursor-help text-white/40 hover:text-white/60' />
                                     </TooltipTrigger>
                                     <TooltipContent className='max-w-[280px]'>
-                                        gpt-image-2 always processes reference images at high fidelity. This improves
-                                        edit quality but uses more input image tokens per request than
-                                        gpt-image-1.5&apos;s default fidelity.
+                                        {t('gptImage2EditInfo')}
                                     </TooltipContent>
                                 </Tooltip>
                             )}
@@ -582,15 +582,15 @@ export function EditingForm({
                                         />
                                         <Label
                                             htmlFor='edit-enable-streaming'
-                                            className={`text-sm ${editN[0] > 1 ? 'cursor-not-allowed text-white/40' : 'cursor-pointer text-white/80'}`}>
-                                            Enable Streaming
+                                            className={`text-sm ${editN[0] > 1 ? 'cursor-not-allowed text-white/40' : '-'}`}>
+                                            {t('enableStreaming')}
                                         </Label>
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent className='max-w-[250px]'>
                                     {editN[0] > 1
-                                        ? 'Streaming is only supported when generating a single image (n=1).'
-                                        : 'Shows partial preview images as they are generated, providing a more interactive experience.'}
+                                        ? t('streamingSingleOnly')
+                                        : t('streamingHelp')}
                                 </TooltipContent>
                             </Tooltip>
                         </div>
@@ -599,13 +599,13 @@ export function EditingForm({
                     {enableStreaming && (
                         <div className='space-y-3'>
                             <div className='flex items-center gap-2'>
-                                <Label className='text-white'>Preview Images</Label>
+                                <Label className='text-white'>{t('previewImages')}</Label>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <HelpCircle className='h-4 w-4 cursor-help text-white/40 hover:text-white/60' />
                                     </TooltipTrigger>
                                     <TooltipContent className='max-w-[250px]'>
-                                        Each preview image adds ~$0.003 to the cost (100 additional output tokens).
+                                        {t('previewCostHelp')}
                                     </TooltipContent>
                                 </Tooltip>
                             </div>
@@ -650,11 +650,11 @@ export function EditingForm({
 
                     <div className='space-y-1.5'>
                         <Label htmlFor='edit-prompt' className='text-white'>
-                            Prompt
+                            {t('prompt')}
                         </Label>
                         <Textarea
                             id='edit-prompt'
-                            placeholder='e.g., Add a party hat to the main subject'
+                            placeholder={t('editPromptPlaceholder')}
                             value={editPrompt}
                             onChange={(e) => setEditPrompt(e.target.value)}
                             required
@@ -664,13 +664,13 @@ export function EditingForm({
                     </div>
 
                     <div className='space-y-2'>
-                        <Label className='text-white'>Source Image(s) [Max: 10]</Label>
+                        <Label className='text-white'>{t('sourceImages')}</Label>
                         <Label
                             htmlFor='image-files-input'
                             className='flex h-10 w-full cursor-pointer items-center justify-between rounded-md border border-white/20 bg-black px-3 py-2 text-sm transition-colors hover:bg-white/5'>
                             <span className='truncate pr-2 text-white/60'>{displayFileNames(imageFiles)}</span>
                             <span className='flex shrink-0 items-center gap-1.5 rounded-md bg-white/10 px-3 py-1 text-xs font-medium text-white/80 hover:bg-white/20'>
-                                <Upload className='h-3 w-3' /> Browse...
+                                <Upload className='h-3 w-3' /> {t('browse')}
                             </span>
                         </Label>
                         <Input
@@ -710,7 +710,7 @@ export function EditingForm({
                     </div>
 
                     <div className='space-y-3'>
-                        <Label className='block text-white'>Mask</Label>
+                        <Label className='block text-white'>{t('mask')}</Label>
                         <Button
                             type='button'
                             variant='outline'
@@ -719,12 +719,12 @@ export function EditingForm({
                             disabled={isLoading || !editOriginalImageSize}
                             className='w-full justify-start border-white/20 px-3 text-white/80 hover:bg-white/10 hover:text-white'>
                             {editShowMaskEditor
-                                ? 'Close Mask Editor'
+                                ? t('closeMaskEditor')
                                 : editGeneratedMaskFile
-                                  ? 'Edit Saved Mask'
-                                  : 'Create Mask'}
+                                  ? t('editSavedMask')
+                                  : t('createMask')}
                             {editIsMaskSaved && !editShowMaskEditor && (
-                                <span className='ml-auto text-xs text-green-400'>(Saved)</span>
+                                <span className='ml-auto text-xs text-green-400'>({t('saved')})</span>
                             )}
                             <ScanEye className='mt-0.5' />
                         </Button>
@@ -732,8 +732,7 @@ export function EditingForm({
                         {editShowMaskEditor && firstImagePreviewUrl && editOriginalImageSize && (
                             <div className='space-y-3 rounded-md border border-white/20 bg-black p-3'>
                                 <p className='text-xs text-white/60'>
-                                    Draw on the image below to mark areas for editing (drawn areas become transparent in
-                                    the mask).
+                                    {t('maskInstruction')}
                                 </p>
                                 <div
                                     className='relative mx-auto w-full overflow-hidden rounded border border-white/10'
@@ -766,7 +765,7 @@ export function EditingForm({
                                 <div className='grid grid-cols-1 gap-4 pt-2'>
                                     <div className='space-y-2'>
                                         <Label htmlFor='brush-size-slider' className='text-sm text-white'>
-                                            Brush Size: {editBrushSize[0]}px
+                                            {t('brushSize')}: {editBrushSize[0]}px
                                         </Label>
                                         <Slider
                                             id='brush-size-slider'
@@ -788,7 +787,7 @@ export function EditingForm({
                                         onClick={() => maskInputRef.current?.click()}
                                         disabled={isLoading || !editOriginalImageSize}
                                         className='mr-auto border-white/20 text-white/80 hover:bg-white/10 hover:text-white'>
-                                        <UploadCloud className='mr-1.5 h-4 w-4' /> Upload Mask
+                                        <UploadCloud className='mr-1.5 h-4 w-4' /> {t('uploadMask')}
                                     </Button>
                                     <Input
                                         ref={maskInputRef}
@@ -806,7 +805,7 @@ export function EditingForm({
                                             onClick={handleClearMask}
                                             disabled={isLoading}
                                             className='border-white/20 text-white/80 hover:bg-white/10 hover:text-white'>
-                                            <Eraser className='mr-1.5 h-4 w-4' /> Clear
+                                            <Eraser className='mr-1.5 h-4 w-4' /> {t('clear')}
                                         </Button>
                                         <Button
                                             type='button'
@@ -815,14 +814,14 @@ export function EditingForm({
                                             onClick={generateAndSaveMask}
                                             disabled={isLoading || editDrawnPoints.length === 0}
                                             className='bg-white text-black hover:bg-white/90 disabled:opacity-50'>
-                                            <Save className='mr-1.5 h-4 w-4' /> Save Mask
+                                            <Save className='mr-1.5 h-4 w-4' /> {t('saveMask')}
                                         </Button>
                                     </div>
                                 </div>
                                 {editMaskPreviewUrl && (
                                     <div className='mt-3 border-t border-white/10 pt-3 text-center'>
                                         <Label className='mb-1.5 block text-sm text-white'>
-                                            Generated Mask Preview:
+                                            {t('generatedMaskPreview')}
                                         </Label>
                                         <div className='inline-block rounded border border-gray-300 bg-white p-1'>
                                             <Image
@@ -839,32 +838,32 @@ export function EditingForm({
                                 )}
                                 {editIsMaskSaved && !editMaskPreviewUrl && (
                                     <p className='pt-1 text-center text-xs text-yellow-400'>
-                                        Generating mask preview...
+                                        {t('generatingMaskPreview')}
                                     </p>
                                 )}
                                 {editIsMaskSaved && editMaskPreviewUrl && (
-                                    <p className='pt-1 text-center text-xs text-green-400'>Mask saved successfully!</p>
+                                    <p className='pt-1 text-center text-xs text-green-400'>{t('maskSaved')}</p>
                                 )}
                             </div>
                         )}
                         {!editShowMaskEditor && editGeneratedMaskFile && (
-                            <p className='pt-1 text-xs text-green-400'>Mask applied: {editGeneratedMaskFile.name}</p>
+                            <p className='pt-1 text-xs text-green-400'>{t('maskApplied')}: {editGeneratedMaskFile.name}</p>
                         )}
                     </div>
 
                     <div className='space-y-3'>
-                        <Label className='block text-white'>Size</Label>
+                        <Label className='block text-white'>{t('size')}</Label>
                         <RadioGroup
                             value={editSize}
                             onValueChange={(value) => setEditSize(value as EditingFormData['size'])}
                             disabled={isLoading}
                             className='flex flex-wrap gap-x-5 gap-y-3'>
-                            <RadioItemWithIcon value='auto' id='edit-size-auto' label='Auto' Icon={Sparkles} />
+                            <RadioItemWithIcon value='auto' id='edit-size-auto' label={t('auto')} Icon={Sparkles} />
                             {isGptImage2 && (
                                 <RadioItemWithIcon
                                     value='custom'
                                     id='edit-size-custom'
-                                    label='Custom'
+                                    label={t('custom')}
                                     Icon={SquareDashed}
                                 />
                             )}
@@ -874,7 +873,7 @@ export function EditingForm({
                                         <RadioItemWithIcon
                                             value='square'
                                             id='edit-size-square'
-                                            label='Square'
+                                            label={t('square')}
                                             Icon={Square}
                                         />
                                     </div>
@@ -887,7 +886,7 @@ export function EditingForm({
                                         <RadioItemWithIcon
                                             value='landscape'
                                             id='edit-size-landscape'
-                                            label='Landscape'
+                                            label={t('landscape')}
                                             Icon={RectangleHorizontal}
                                         />
                                     </div>
@@ -900,7 +899,7 @@ export function EditingForm({
                                         <RadioItemWithIcon
                                             value='portrait'
                                             id='edit-size-portrait'
-                                            label='Portrait'
+                                            label={t('portrait')}
                                             Icon={RectangleVertical}
                                         />
                                     </div>
@@ -913,7 +912,7 @@ export function EditingForm({
                                 <div className='flex items-center gap-3'>
                                     <div className='flex-1 space-y-1'>
                                         <Label htmlFor='edit-custom-width' className='text-xs text-white/70'>
-                                            Width (px)
+                                            {t('width')}
                                         </Label>
                                         <Input
                                             id='edit-custom-width'
@@ -927,10 +926,10 @@ export function EditingForm({
                                             className='rounded-md border border-white/20 bg-black text-white focus:border-white/50 focus:ring-white/50'
                                         />
                                     </div>
-                                    <span className='pt-5 text-white/60'>×</span>
+                                    <span className='pt-5 text-white/60'>x</span>
                                     <div className='flex-1 space-y-1'>
                                         <Label htmlFor='edit-custom-height' className='text-xs text-white/70'>
-                                            Height (px)
+                                            {t('height')}
                                         </Label>
                                         <Input
                                             id='edit-custom-height'
@@ -946,40 +945,39 @@ export function EditingForm({
                                     </div>
                                 </div>
                                 <p className='text-xs text-white/50'>
-                                    {(editCustomWidth * editCustomHeight).toLocaleString()} pixels (
-                                    {((editCustomWidth * editCustomHeight) / 8_294_400 * 100).toFixed(1)}% of max) ·{' '}
+                                    {(editCustomWidth * editCustomHeight).toLocaleString()} {t('pixels')} (
+                                    {((editCustomWidth * editCustomHeight) / 8_294_400 * 100).toFixed(1)}% {t('ofMax')}) -{' '}
                                     {editCustomWidth > 0 && editCustomHeight > 0
-                                        ? `${(Math.max(editCustomWidth, editCustomHeight) / Math.min(editCustomWidth, editCustomHeight)).toFixed(2)}:1 ratio`
+                                        ? `${(Math.max(editCustomWidth, editCustomHeight) / Math.min(editCustomWidth, editCustomHeight)).toFixed(2)}:1 ${t('ratio')}`
                                         : '—'}
                                 </p>
                                 {!customSizeValidation.valid && (
                                     <p className='text-xs text-red-400'>{customSizeValidation.reason}</p>
                                 )}
                                 <p className='text-xs text-white/40'>
-                                    Constraints: multiples of 16, max edge 3840px, aspect ratio ≤ 3:1, 655,360 to
-                                    8,294,400 total pixels.
+                                    {t('constraints')}
                                 </p>
                             </div>
                         )}
                     </div>
 
                     <div className='space-y-3'>
-                        <Label className='block text-white'>Quality</Label>
+                        <Label className='block text-white'>{t('quality')}</Label>
                         <RadioGroup
                             value={editQuality}
                             onValueChange={(value) => setEditQuality(value as EditingFormData['quality'])}
                             disabled={isLoading}
                             className='flex flex-wrap gap-x-5 gap-y-3'>
-                            <RadioItemWithIcon value='auto' id='edit-quality-auto' label='Auto' Icon={Sparkles} />
-                            <RadioItemWithIcon value='low' id='edit-quality-low' label='Low' Icon={Tally1} />
-                            <RadioItemWithIcon value='medium' id='edit-quality-medium' label='Medium' Icon={Tally2} />
-                            <RadioItemWithIcon value='high' id='edit-quality-high' label='High' Icon={Tally3} />
+                            <RadioItemWithIcon value='auto' id='edit-quality-auto' label={t('auto')} Icon={Sparkles} />
+                            <RadioItemWithIcon value='low' id='edit-quality-low' label={t('low')} Icon={Tally1} />
+                            <RadioItemWithIcon value='medium' id='edit-quality-medium' label={t('medium')} Icon={Tally2} />
+                            <RadioItemWithIcon value='high' id='edit-quality-high' label={t('high')} Icon={Tally3} />
                         </RadioGroup>
                     </div>
 
                     <div className='space-y-2'>
                         <Label htmlFor='edit-n-slider' className='text-white'>
-                            Number of Images: {editN[0]}
+                            {t('numberOfImages')}: {editN[0]}
                         </Label>
                         <Slider
                             id='edit-n-slider'
@@ -999,7 +997,7 @@ export function EditingForm({
                         disabled={isLoading || !editPrompt || imageFiles.length === 0 || customSizeInvalid}
                         className='flex w-full items-center justify-center gap-2 rounded-md bg-white text-black hover:bg-white/90 disabled:bg-white/10 disabled:text-white/40'>
                         {isLoading && <Loader2 className='h-4 w-4 animate-spin' />}
-                        {isLoading ? 'Editing...' : 'Edit Image'}
+                        {isLoading ? t('editing') : t('editImage')}
                     </Button>
                 </CardFooter>
             </form>

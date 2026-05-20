@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { Loader2, Send, Grid } from 'lucide-react';
 import Image from 'next/image';
@@ -40,6 +41,7 @@ export function ImageOutput({
     baseImagePreviewUrl,
     streamingPreviewImages
 }: ImageOutputProps) {
+    const { t } = useI18n();
     const handleSendClick = () => {
         // Send to edit only works when a single image is selected
         if (typeof viewMode === 'number' && imageBatch && imageBatch[viewMode]) {
@@ -78,7 +80,7 @@ export function ImageOutput({
                             {/* Overlay loader at bottom center */}
                             <div className='absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-white/80'>
                                 <Loader2 className='h-4 w-4 animate-spin' />
-                                <p className='text-sm'>Streaming...</p>
+                                <p className='text-sm'>{t('streaming')}</p>
                             </div>
                         </div>
                     ) : currentMode === 'edit' && baseImagePreviewUrl ? (
@@ -93,13 +95,13 @@ export function ImageOutput({
                             />
                             <div className='absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white/80'>
                                 <Loader2 className='mb-2 h-8 w-8 animate-spin' />
-                                <p>Editing image...</p>
+                                <p>{t('editingImage')}</p>
                             </div>
                         </div>
                     ) : (
                         <div className='flex flex-col items-center justify-center text-white/60'>
                             <Loader2 className='mb-2 h-8 w-8 animate-spin' />
-                            <p>Generating image...</p>
+                            <p>{t('generatingImage')}</p>
                         </div>
                     )
                 ) : imageBatch && imageBatch.length > 0 ? (
@@ -132,12 +134,12 @@ export function ImageOutput({
                         />
                     ) : (
                         <div className='text-center text-white/40'>
-                            <p>Error displaying image.</p>
+                            <p>{t('displayError')}</p>
                         </div>
                     )
                 ) : (
                     <div className='text-center text-white/40'>
-                        <p>Your generated image will appear here.</p>
+                        <p>{t('imageOutputEmpty')}</p>
                     </div>
                 )}
             </div>
@@ -155,7 +157,7 @@ export function ImageOutput({
                                     : 'text-white/50 hover:bg-white/10 hover:text-white/80'
                             )}
                             onClick={() => onViewChange('grid')}
-                            aria-label='Show grid view'>
+                            aria-label={t('showGridView')}>
                             <Grid className='h-4 w-4' />
                         </Button>
                         {imageBatch.map((img, index) => (
@@ -170,10 +172,10 @@ export function ImageOutput({
                                         : 'opacity-60 hover:opacity-100'
                                 )}
                                 onClick={() => onViewChange(index)}
-                                aria-label={`Select image ${index + 1}`}>
+                                aria-label={`${t('selectImage')} ${index + 1}`}>
                                 <Image
                                     src={img.path}
-                                    alt={`Thumbnail ${index + 1}`}
+                                    alt={`${t('thumbnail')} ${index + 1}`}
                                     width={28}
                                     height={28}
                                     className='h-full w-full object-cover'
@@ -195,7 +197,7 @@ export function ImageOutput({
                         showCarousel && viewMode === 'grid' ? 'invisible' : 'visible'
                     )}>
                     <Send className='mr-2 h-4 w-4' />
-                    Send to Edit
+                    {t('sendToEdit')}
                 </Button>
             </div>
         </div>

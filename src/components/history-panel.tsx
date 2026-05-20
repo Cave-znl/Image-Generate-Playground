@@ -16,6 +16,7 @@ import {
     DialogClose
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 import {
     Copy,
     Check,
@@ -68,6 +69,7 @@ function HistoryPanelImpl({
     deletePreferenceDialogValue,
     onDeletePreferenceDialogChange
 }: HistoryPanelProps) {
+    const { t } = useI18n();
     const [openPromptDialogTimestamp, setOpenPromptDialogTimestamp] = React.useState<number | null>(null);
     const [openCostDialogTimestamp, setOpenCostDialogTimestamp] = React.useState<number | null>(null);
     const [isTotalCostDialogOpen, setIsTotalCostDialogOpen] = React.useState(false);
@@ -103,22 +105,22 @@ function HistoryPanelImpl({
         <Card className='flex h-full w-full flex-col overflow-hidden rounded-lg border border-white/10 bg-black'>
             <CardHeader className='flex flex-row items-center justify-between gap-4 border-b border-white/10 px-4 py-3'>
                 <div className='flex items-center gap-2'>
-                    <CardTitle className='text-lg font-medium text-white'>History</CardTitle>
+                    <CardTitle className='text-lg font-medium text-white'>{t('history')}</CardTitle>
                     {totalCost > 0 && (
                         <Dialog open={isTotalCostDialogOpen} onOpenChange={setIsTotalCostDialogOpen}>
                             <DialogTrigger asChild>
                                 <button
                                     className='mt-0.5 flex items-center gap-1 rounded-full bg-green-600/80 px-1.5 py-0.5 text-[12px] text-white transition-colors hover:bg-green-500/90'
-                                    aria-label='Show total cost summary'>
-                                    Total Cost: ${totalCost.toFixed(4)}
+                                    aria-label={t('totalCostSummary')}>
+                                    {t('totalCost')}: ${totalCost.toFixed(4)}
                                 </button>
                             </DialogTrigger>
                             <DialogContent className='border-neutral-700 bg-neutral-900 text-white sm:max-w-[450px]'>
                                 <DialogHeader>
-                                    <DialogTitle className='text-white'>Total Cost Summary</DialogTitle>
+                                    <DialogTitle className='text-white'>{t('totalCostSummary')}</DialogTitle>
                                     {/* Add sr-only description for accessibility */}
                                     <DialogDescription className='sr-only'>
-                                        A summary of the total estimated cost for all generated images in the history.
+                                        {t('totalCostDescription')}
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className='space-y-1 pt-1 text-xs text-neutral-400'>
@@ -149,14 +151,14 @@ function HistoryPanelImpl({
                                 </div>
                                 <div className='space-y-2 py-4 text-sm text-neutral-300'>
                                     <div className='flex justify-between'>
-                                        <span>Total Images Generated:</span> <span>{totalImages.toLocaleString()}</span>
+                                        <span>{t('totalImagesGenerated')}</span> <span>{totalImages.toLocaleString()}</span>
                                     </div>
                                     <div className='flex justify-between'>
-                                        <span>Average Cost Per Image:</span> <span>${averageCost.toFixed(4)}</span>
+                                        <span>{t('averageCostPerImage')}</span> <span>${averageCost.toFixed(4)}</span>
                                     </div>
                                     <hr className='my-2 border-neutral-700' />
                                     <div className='flex justify-between font-medium text-white'>
-                                        <span>Total Estimated Cost:</span>
+                                        <span>{t('totalEstimatedCost')}</span>
                                         <span>${totalCost.toFixed(4)}</span>
                                     </div>
                                 </div>
@@ -167,7 +169,7 @@ function HistoryPanelImpl({
                                             variant='secondary'
                                             size='sm'
                                             className='bg-neutral-700 text-neutral-200 hover:bg-neutral-600'>
-                                            Close
+                                            {t('close')}
                                         </Button>
                                     </DialogClose>
                                 </DialogFooter>
@@ -181,14 +183,14 @@ function HistoryPanelImpl({
                         size='sm'
                         onClick={onClearHistory}
                         className='h-auto rounded-md px-2 py-1 text-white/60 hover:bg-white/10 hover:text-white'>
-                        Clear
+                        {t('clearHistory')}
                     </Button>
                 )}
             </CardHeader>
             <CardContent className='flex-grow overflow-y-auto p-4'>
                 {history.length === 0 ? (
                     <div className='flex h-full items-center justify-center text-white/40'>
-                        <p>Generated images will appear here.</p>
+                        <p>{t('historyEmpty')}</p>
                     </div>
                 ) : (
                     <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
@@ -215,7 +217,7 @@ function HistoryPanelImpl({
                                         <button
                                             onClick={() => onSelectImage(item)}
                                             className='relative block aspect-square w-full overflow-hidden rounded-t-md border border-white/20 transition-all duration-150 group-hover:border-white/40 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black focus:outline-none'
-                                            aria-label={`View image batch from ${new Date(item.timestamp).toLocaleString()}`}>
+                                            aria-label={`${t('viewImageBatch')} ${new Date(item.timestamp).toLocaleString()}`}>
                                             {thumbnailUrl ? (
                                                 <Image
                                                     src={thumbnailUrl}
@@ -240,7 +242,7 @@ function HistoryPanelImpl({
                                                 ) : (
                                                     <SparklesIcon size={12} />
                                                 )}
-                                                {item.mode === 'edit' ? 'Edit' : 'Create'}
+                                                {item.mode === 'edit' ? t('edit') : t('generate')}
                                             </div>
                                             {isMultiImage && (
                                                 <div className='pointer-events-none absolute right-1 bottom-1 z-10 flex items-center gap-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[12px] text-white'>
@@ -276,14 +278,14 @@ function HistoryPanelImpl({
                                                             setOpenCostDialogTimestamp(itemKey);
                                                         }}
                                                         className='absolute top-1 right-1 z-20 flex items-center gap-0.5 rounded-full bg-green-600/80 px-1.5 py-0.5 text-[11px] text-white transition-colors hover:bg-green-500/90'
-                                                        aria-label='Show cost breakdown'>
+                                                        aria-label={t('costDetails')}>
                                                         <DollarSign size={12} />
                                                         {item.costDetails.estimated_cost_usd.toFixed(4)}
                                                     </button>
                                                 </DialogTrigger>
                                                 <DialogContent className='border-neutral-700 bg-neutral-900 text-white sm:max-w-[450px]'>
                                                     <DialogHeader>
-                                                        <DialogTitle className='text-white'>Cost Breakdown</DialogTitle>
+                                                        <DialogTitle className='text-white'>{t('costDetails')}</DialogTitle>
                                                         <DialogDescription className='sr-only'>
                                                             Estimated cost breakdown for this image generation.
                                                         </DialogDescription>
@@ -353,7 +355,7 @@ function HistoryPanelImpl({
                                                                     </div>
                                                                     <hr className='my-2 border-neutral-700' />
                                                                     <div className='flex justify-between font-medium text-white'>
-                                                                        <span>Total Estimated Cost:</span>
+                                                                        <span>{t('totalEstimatedCost')}</span>
                                                                         <span>
                                                                             ${item.costDetails.estimated_cost_usd.toFixed(4)}
                                                                         </span>
@@ -369,7 +371,7 @@ function HistoryPanelImpl({
                                                                 variant='secondary'
                                                                 size='sm'
                                                                 className='bg-neutral-700 text-neutral-200 hover:bg-neutral-600'>
-                                                                Close
+                                                                {t('close')}
                                                             </Button>
                                                         </DialogClose>
                                                     </DialogFooter>
@@ -407,12 +409,12 @@ function HistoryPanelImpl({
                                                         size='sm'
                                                         className='h-6 flex-grow border-white/20 px-2 py-1 text-xs text-white/70 hover:bg-white/10 hover:text-white'
                                                         onClick={() => setOpenPromptDialogTimestamp(itemKey)}>
-                                                        Show Prompt
+                                                        {t('viewPrompt')}
                                                     </Button>
                                                 </DialogTrigger>
                                                 <DialogContent className='border-neutral-700 bg-neutral-900 text-white sm:max-w-[625px]'>
                                                     <DialogHeader>
-                                                        <DialogTitle className='text-white'>Prompt</DialogTitle>
+                                                        <DialogTitle className='text-white'>{t('prompt')}</DialogTitle>
                                                         <DialogDescription className='sr-only'>
                                                             The full prompt used to generate this image batch.
                                                         </DialogDescription>
@@ -431,7 +433,7 @@ function HistoryPanelImpl({
                                                             ) : (
                                                                 <Copy className='mr-2 h-4 w-4' />
                                                             )}
-                                                            {copiedTimestamp === itemKey ? 'Copied!' : 'Copy'}
+                                                            {copiedTimestamp === itemKey ? t('copied') : t('copyPrompt')}
                                                         </Button>
                                                         <DialogClose asChild>
                                                             <Button
@@ -439,7 +441,7 @@ function HistoryPanelImpl({
                                                                 variant='secondary'
                                                                 size='sm'
                                                                 className='bg-neutral-700 text-neutral-200 hover:bg-neutral-600'>
-                                                                Close
+                                                                {t('close')}
                                                             </Button>
                                                         </DialogClose>
                                                     </DialogFooter>
@@ -457,19 +459,17 @@ function HistoryPanelImpl({
                                                             e.stopPropagation();
                                                             onDeleteItemRequest(item);
                                                         }}
-                                                        aria-label='Delete history item'>
+                                                        aria-label={t('deleteItem')}>
                                                         <Trash2 size={14} />
                                                     </Button>
                                                 </DialogTrigger>
                                                 <DialogContent className='border-neutral-700 bg-neutral-900 text-white sm:max-w-md'>
                                                     <DialogHeader>
                                                         <DialogTitle className='text-white'>
-                                                            Confirm Deletion
+                                                            {t('deleteConfirmTitle')}
                                                         </DialogTitle>
                                                         <DialogDescription className='pt-2 text-neutral-300'>
-                                                            Are you sure you want to delete this history entry? This
-                                                            will remove {item.images.length} image(s). This action
-                                                            cannot be undone.
+                                                            {t('deleteConfirmDescription')}
                                                         </DialogDescription>
                                                     </DialogHeader>
                                                     <div className='flex items-center space-x-2 py-2'>
@@ -484,7 +484,7 @@ function HistoryPanelImpl({
                                                         <label
                                                             htmlFor={`dont-ask-${item.timestamp}`}
                                                             className='text-sm leading-none font-medium text-neutral-300 peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
-                                                            Don&apos;t ask me again
+                                                            {t('dontAskAgain')}
                                                         </label>
                                                     </div>
                                                     <DialogFooter className='gap-2 sm:justify-end'>
@@ -494,7 +494,7 @@ function HistoryPanelImpl({
                                                             size='sm'
                                                             onClick={onCancelDeletion}
                                                             className='border-neutral-600 text-neutral-300 hover:bg-neutral-700 hover:text-white'>
-                                                            Cancel
+                                                            {t('cancel')}
                                                         </Button>
                                                         <Button
                                                             type='button'
@@ -502,7 +502,7 @@ function HistoryPanelImpl({
                                                             size='sm'
                                                             onClick={onConfirmDeletion}
                                                             className='bg-red-600 text-white hover:bg-red-500'>
-                                                            Delete
+                                                            {t('delete')}
                                                         </Button>
                                                     </DialogFooter>
                                                 </DialogContent>

@@ -1,6 +1,7 @@
 'use client';
 
 import { EditingForm, type EditingFormData } from '@/components/editing-form';
+import { AppControls } from '@/components/app-controls';
 import { GenerationForm, type GenerationFormData } from '@/components/generation-form';
 import { HistoryPanel } from '@/components/history-panel';
 import { ImageOutput } from '@/components/image-output';
@@ -9,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { calculateApiCost, type CostDetails, type GptImageModel } from '@/lib/cost-utils';
 import { getPresetDimensions } from '@/lib/size-utils';
 import { db, type ImageRecord } from '@/lib/db';
+import { useI18n } from '@/lib/i18n';
 import { useLiveQuery } from 'dexie-react-hooks';
 import * as React from 'react';
 
@@ -67,6 +69,7 @@ type ApiImageResponseItem = {
 };
 
 export default function HomePage() {
+    const { t } = useI18n();
     const [mode, setMode] = React.useState<'generate' | 'edit'>('generate');
     const [isPasswordRequiredByBackend, setIsPasswordRequiredByBackend] = React.useState<boolean | null>(null);
     const [clientPasswordHash, setClientPasswordHash] = React.useState<string | null>(null);
@@ -703,8 +706,8 @@ export default function HomePage() {
     const handleClearHistory = React.useCallback(async () => {
         const confirmationMessage =
             effectiveStorageModeClient === 'indexeddb'
-                ? 'Are you sure you want to clear the entire image history? In IndexedDB mode, this will also permanently delete all stored images. This cannot be undone.'
-                : 'Are you sure you want to clear the entire image history? This cannot be undone.';
+                ? t('clearHistoryIndexedDbConfirm')
+                : t('clearHistoryConfirm');
 
         if (window.confirm(confirmationMessage)) {
             setHistory([]);
@@ -725,7 +728,7 @@ export default function HomePage() {
                 setError(`Failed to clear history: ${e instanceof Error ? e.message : String(e)}`);
             }
         }
-    }, []);
+    }, [t]);
 
     const handleSendToEdit = async (filename: string) => {
         if (isSendingToEdit) return;
@@ -863,19 +866,26 @@ export default function HomePage() {
     }, []);
 
     return (
-        <main className='flex min-h-screen flex-col items-center bg-black p-4 text-white md:p-8 lg:p-12'>
+        <main className='flex min-h-screen flex-col items-center bg-background p-4 text-foreground md:p-8 lg:p-12'>
             <PasswordDialog
                 isOpen={isPasswordDialogOpen}
                 onOpenChange={setIsPasswordDialogOpen}
                 onSave={handleSavePassword}
-                title={passwordDialogContext === 'retry' ? 'Password Required' : 'Configure Password'}
+                title={passwordDialogContext === 'retry' ? t('passwordRequired') : t('configurePassword')}
                 description={
                     passwordDialogContext === 'retry'
-                        ? 'The server requires a password, or the previous one was incorrect. Please enter it to continue.'
-                        : 'Set a password to use for API requests.'
+                        ? t('passwordRetryDescription')
+                        : t('passwordInitialDescription')
                 }
             />
             <div className='w-full max-w-screen-2xl space-y-6'>
+                <header className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                    <div>
+                        <h1 className='text-2xl font-semibold tracking-normal text-foreground'>{t('appTitle')}</h1>
+                        <p className='mt-1 text-sm text-muted-foreground'>{t('appSubtitle')}</p>
+                    </div>
+                    <AppControls />
+                </header>
                 <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
                     <div className='relative flex h-[70vh] min-h-[600px] flex-col lg:col-span-1'>
                         <div className={mode === 'generate' ? 'block h-full w-full' : 'hidden'}>
@@ -967,7 +977,7 @@ export default function HomePage() {
                     <div className='flex h-[70vh] min-h-[600px] flex-col lg:col-span-1'>
                         {error && (
                             <Alert variant='destructive' className='mb-4 border-red-500/50 bg-red-900/20 text-red-300'>
-                                <AlertTitle className='text-red-200'>Error</AlertTitle>
+                                <AlertTitle className='text-red-200'>{t('alertError')}</AlertTitle>
                                 <AlertDescription>{error}</AlertDescription>
                             </Alert>
                         )}

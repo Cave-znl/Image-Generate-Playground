@@ -120,3 +120,67 @@
     @apply bg-background text-foreground;
   }
 }
+
+html:not(.dark) .bg-black {
+  background-color: var(--card) !important;
+}
+
+html:not(.dark) .bg-neutral-900,
+html:not(.dark) .bg-neutral-800 {
+  background-color: var(--popover) !important;
+}
+
+html:not(.dark) .bg-neutral-900\/80,
+html:not(.dark) .bg-neutral-800\/50 {
+  background-color: color-mix(in oklch, var(--popover) 88%, transparent) !important;
+}
+
+html:not(.dark) .bg-white {
+  background-color: var(--primary) !important;
+}
+
+html:not(.dark) .bg-white\/5,
+html:not(.dark) .bg-white\/10,
+html:not(.dark) .bg-white\/20 {
+  background-color: color-mix(in oklch, var(--foreground) 8%, transparent) !important;
+}
+
+html:not(.dark) .text-white {
+  color: var(--foreground) !important;
+}
+
+html:not(.dark) .text-black {
+  color: var(--primary-foreground) !important;
+}
+
+html:not(.dark) .text-white\/80 {
+  color: color-mix(in oklch, var(--foreground) 80%, transparent) !important;
+}
+
+html:not(.dark) .text-white\/70 {
+  color: color-mix(in oklch, var(--foreground) 70%, transparent) !important;
+}
+
+html:not(.dark) .text-white\/60 {
+  color: color-mix(in oklch, var(--foreground) 60%, transparent) !important;
+}
+
+html:not(.dark) .text-white\/50,
+html:not(.dark) .text-white\/40 {
+  color: var(--muted-foreground) !important;
+}
+
+html:not(.dark) .border-white\/10,
+html:not(.dark) .border-white\/20,
+html:not(.dark) .border-white\/30,
+html:not(.dark) .border-white\/40 {
+  border-color: var(--border) !important;
+}
+
+html:not(.dark) .placeholder\:text-white\/40::placeholder {
+  color: var(--muted-foreground) !important;
+}
+
+html:not(.dark) .ring-offset-black {
+  --tw-ring-offset-color: var(--background) !important;
+}
