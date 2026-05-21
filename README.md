@@ -27,13 +27,14 @@ Image Generate Playground 更偏向个人或团队自部署场景：
 - `gpt-image-2`
 - `grok-imagine-image-edit`
 
-说明：Grok 模型通过 OpenAI 兼容格式请求当前配置的中转接口。`gpt-image-2` 使用 `OPENAI_API_KEY`，Grok 模型使用 `GROK_API_KEY`。
+说明：Grok 模型通过 OpenAI 兼容格式请求当前配置的中转接口。`gpt-image-2` 使用 `OPENAI_API_KEY`，Grok 模型使用 `GROK_API_KEY`。调用 Grok 图像模型时会强制传入 `response_format: "b64_json"`，以便后端统一按 base64 图片数据保存和返回。
 
 ## 当前能力
 
 - 文生图：通过文本提示词生成图片
 - 图像编辑：上传图片并通过提示词进行编辑
 - 蒙版编辑：支持通过蒙版限定编辑区域
+- 提示词模板库：生成和编辑模式均可从提示词输入区打开模板库，支持分类浏览、搜索、替换当前提示词或追加到现有提示词；中文界面会显示本地化模板标题、描述、标签和提示词正文
 - 参数控制：尺寸、质量、格式、压缩、背景、审核、生成数量等
 - 自定义尺寸：支持 `gpt-image-2` 的 2K/4K 与自定义分辨率
 - 下载原图：可直接下载当前选中的最终原图
@@ -41,8 +42,8 @@ Image Generate Playground 更偏向个人或团队自部署场景：
 - 主题切换：支持 dark/light 模式
 - 历史记录：保存生成参数、图片结果与费用估算
 - 存储模式：
-  - `fs`：图片保存到服务器 `generated-images` 目录
-  - `indexeddb`：图片保存到浏览器 IndexedDB，适合 serverless 部署
+    - `fs`：图片保存到服务器 `generated-images` 目录
+    - `indexeddb`：图片保存到浏览器 IndexedDB，适合 serverless 部署
 - 访问密码：可通过 `APP_PASSWORD` 开启简单密码校验
 - 自定义接口：可通过 `OPENAI_API_BASE_URL` 接入兼容 OpenAI Images API 的服务
 
@@ -51,7 +52,7 @@ Image Generate Playground 更偏向个人或团队自部署场景：
 后续计划包括：
 
 - 新增更多图像模型和兼容接口适配
-- 增加提示词库与提示词模板管理
+- 增强提示词模板管理、收藏与团队复用能力
 - 增加登录选项与更完整的访问控制
 - 优化移动端与中文使用体验
 - 增强历史记录、收藏、复用和批量管理能力
@@ -142,13 +143,13 @@ location / {
 
 ## 环境变量
 
-| 变量 | 必填 | 说明 |
-| --- | --- | --- |
-| `OPENAI_API_KEY` | 是 | GPT 图像模型接口密钥 |
-| `GROK_API_KEY` | 否 | Grok 图像模型接口密钥，使用 `grok-imagine-image` 或 `grok-imagine-image-edit` 时需要 |
-| `OPENAI_API_BASE_URL` | 否 | OpenAI 兼容接口地址，不填则使用默认 OpenAI 接口 |
-| `NEXT_PUBLIC_IMAGE_STORAGE_MODE` | 否 | 图片存储模式，支持 `fs` 或 `indexeddb` |
-| `APP_PASSWORD` | 否 | 设置后前端请求需要输入访问密码 |
+| 变量                             | 必填 | 说明                                                                                                                     |
+| -------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------ |
+| `OPENAI_API_KEY`                 | 是   | GPT 图像模型接口密钥                                                                                                     |
+| `GROK_API_KEY`                   | 否   | Grok 图像模型接口密钥，使用 `grok-imagine-image` 或 `grok-imagine-image-edit` 时需要；Grok 请求会强制要求返回 `b64_json` |
+| `OPENAI_API_BASE_URL`            | 否   | OpenAI 兼容接口地址，不填则使用默认 OpenAI 接口                                                                          |
+| `NEXT_PUBLIC_IMAGE_STORAGE_MODE` | 否   | 图片存储模式，支持 `fs` 或 `indexeddb`                                                                                   |
+| `APP_PASSWORD`                   | 否   | 设置后前端请求需要输入访问密码                                                                                           |
 
 注意：不要把 `OPENAI_API_KEY`、`GROK_API_KEY`、`APP_PASSWORD` 写入任何 `NEXT_PUBLIC_` 开头的变量。
 
@@ -175,16 +176,6 @@ location ~ /\.(?!well-known) {
 - License：MIT
 
 本仓库会根据自身部署和使用需求继续演进，相关二次开发内容会在后续版本中逐步完善。
-
-## Prompt Template Library
-
-The app now includes a prompt template library for both generation and editing workflows.
-
-- Open it from the prompt field via the Templates button.
-- Browse templates by category, including product, portrait, scene, style, edit, and utility.
-- Search across template titles, descriptions, tags, and prompt content.
-- Use a template to replace the current prompt, or append it to the existing prompt.
-- Chinese UI mode shows localized template titles, descriptions, tags, categories, and prompt text.
 
 ## License
 

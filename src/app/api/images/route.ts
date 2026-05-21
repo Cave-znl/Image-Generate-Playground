@@ -1,9 +1,9 @@
+import { isEditImageModel, isGenerateImageModel } from '@/lib/cost-utils';
 import crypto from 'crypto';
 import fs from 'fs/promises';
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import path from 'path';
-import { isEditImageModel, isGenerateImageModel } from '@/lib/cost-utils';
 
 // Streaming event types
 type StreamingEvent = {
@@ -29,6 +29,14 @@ const outputDir = path.resolve(process.cwd(), 'generated-images');
 // Define valid output formats for type safety
 const VALID_OUTPUT_FORMATS = ['png', 'jpeg', 'webp'] as const;
 type ValidOutputFormat = (typeof VALID_OUTPUT_FORMATS)[number];
+
+type ImageGenerateParamsWithResponseFormat = OpenAI.Images.ImageGenerateParams & {
+    response_format?: 'b64_json';
+};
+
+type ImageEditParamsWithResponseFormat = OpenAI.Images.ImageEditParams & {
+    response_format?: 'b64_json';
+};
 
 // Validate and normalize output format
 function validateOutputFormat(format: unknown): ValidOutputFormat {
@@ -77,6 +85,10 @@ function getApiKeyForModel(model: string): string | undefined {
     return process.env.OPENAI_API_KEY;
 }
 
+function isGrokModel(model: string): boolean {
+    return model.startsWith('grok-');
+}
+
 function createImageClient(model: string): OpenAI {
     const apiKey = getApiKeyForModel(model);
     if (!apiKey) {
@@ -88,6 +100,24 @@ function createImageClient(model: string): OpenAI {
         apiKey,
         baseURL: process.env.OPENAI_API_BASE_URL
     });
+}
+
+function resolveImageBuffer(
+    imageData: NonNullable<OpenAI.Images.ImagesResponse['data']>[number],
+    index: number
+): {
+    buffer: Buffer;
+    b64Json: string;
+} {
+    if (imageData.b64_json) {
+        return {
+            buffer: Buffer.from(imageData.b64_json, 'base64'),
+            b64Json: imageData.b64_json
+        };
+    }
+
+    console.error(`Image data ${index} is missing b64_json.`);
+    throw new Error(`Image data at index ${index} is missing base64 data.`);
 }
 
 export async function POST(request: NextRequest) {
@@ -140,7 +170,10 @@ export async function POST(request: NextRequest) {
         }
 
         if (mode === 'generate' && !isGenerateImageModel(model)) {
-            return NextResponse.json({ error: `Model ${model} is not supported for image generation.` }, { status: 400 });
+            return NextResponse.json(
+                { error: `Model ${model} is not supported for image generation.` },
+                { status: 400 }
+            );
         }
 
         if (mode === 'edit' && !isEditImageModel(model)) {
@@ -168,7 +201,7 @@ export async function POST(request: NextRequest) {
             const moderation =
                 (formData.get('moderation') as OpenAI.Images.ImageGenerateParams['moderation']) || 'auto';
 
-            const baseParams = {
+            const baseParams: ImageGenerateParamsWithResponseFormat = {
                 model: model as OpenAI.Images.ImageGenerateParams['model'],
                 prompt,
                 n: Math.max(1, Math.min(n || 1, 10)),
@@ -178,6 +211,10 @@ export async function POST(request: NextRequest) {
                 background,
                 moderation
             };
+
+            if (isGrokModel(model)) {
+                baseParams.response_format = 'b64_json';
+            }
 
             if ((output_format === 'jpeg' || output_format === 'webp') && output_compression_str) {
                 const compression = parseInt(output_compression_str, 10);
@@ -287,12 +324,12 @@ export async function POST(request: NextRequest) {
                     headers: {
                         'Content-Type': 'text/event-stream',
                         'Cache-Control': 'no-cache',
-                        'Connection': 'keep-alive'
+                        Connection: 'keep-alive'
                     }
                 });
             }
 
-            const params: OpenAI.Images.ImageGenerateParams = baseParams;
+            const params: ImageGenerateParamsWithResponseFormat = baseParams;
             console.log('Calling OpenAI generate with params:', params);
             result = await openai.images.generate(params);
         } else if (mode === 'edit') {
@@ -314,7 +351,7 @@ export async function POST(request: NextRequest) {
 
             const maskFile = formData.get('mask') as File | null;
 
-            const baseEditParams = {
+            const baseEditParams: ImageEditParamsWithResponseFormat = {
                 model: model as OpenAI.Images.ImageEditParams['model'],
                 prompt,
                 image: imageFiles,
@@ -322,6 +359,10 @@ export async function POST(request: NextRequest) {
                 size: size === 'auto' ? undefined : size,
                 quality: quality === 'auto' ? undefined : quality
             };
+
+            if (isGrokModel(model)) {
+                baseEditParams.response_format = 'b64_json';
+            }
 
             // Handle streaming mode for editing
             if (streamEnabled) {
@@ -431,12 +472,12 @@ export async function POST(request: NextRequest) {
                     headers: {
                         'Content-Type': 'text/event-stream',
                         'Cache-Control': 'no-cache',
-                        'Connection': 'keep-alive'
+                        Connection: 'keep-alive'
                     }
                 });
             }
 
-            const params: OpenAI.Images.ImageEditParams = {
+            const params: ImageEditParamsWithResponseFormat = {
                 ...baseEditParams,
                 ...(maskFile ? { mask: maskFile } : {})
             };
@@ -460,11 +501,7 @@ export async function POST(request: NextRequest) {
 
         const savedImagesData = await Promise.all(
             result.data.map(async (imageData, index) => {
-                if (!imageData.b64_json) {
-                    console.error(`Image data ${index} is missing b64_json.`);
-                    throw new Error(`Image data at index ${index} is missing base64 data.`);
-                }
-                const buffer = Buffer.from(imageData.b64_json, 'base64');
+                const { buffer, b64Json } = resolveImageBuffer(imageData, index);
                 const timestamp = Date.now();
 
                 const fileExtension = validateOutputFormat(formData.get('output_format'));
@@ -480,7 +517,7 @@ export async function POST(request: NextRequest) {
 
                 const imageResult: { filename: string; b64_json: string; path?: string; output_format: string } = {
                     filename: filename,
-                    b64_json: imageData.b64_json,
+                    b64_json: b64Json,
                     output_format: fileExtension
                 };
 
