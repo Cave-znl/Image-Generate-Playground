@@ -1,6 +1,7 @@
 'use client';
 
 import { ModeToggle } from '@/components/mode-toggle';
+import { PromptTemplateLibrary } from '@/components/prompt-template-library';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { EDIT_IMAGE_MODELS, type EditImageModel } from '@/lib/cost-utils';
 import { useI18n } from '@/lib/i18n';
 import { getPresetTooltip, validateGptImage2Size } from '@/lib/size-utils';
+import type { SizePreset } from '@/lib/size-utils';
 import {
     Upload,
     Eraser,
@@ -42,9 +45,6 @@ type DrawnPoint = {
     y: number;
     size: number;
 };
-
-import { EDIT_IMAGE_MODELS, type EditImageModel } from '@/lib/cost-utils';
-import type { SizePreset } from '@/lib/size-utils';
 
 export type EditingFormData = {
     prompt: string;
@@ -180,9 +180,7 @@ export function EditingForm({
 
     const isGptImage2 = editModel === 'gpt-image-2';
     const customSizeValidation =
-        editSize === 'custom'
-            ? validateGptImage2Size(editCustomWidth, editCustomHeight)
-            : { valid: true as const };
+        editSize === 'custom' ? validateGptImage2Size(editCustomWidth, editCustomHeight) : { valid: true as const };
     const customSizeInvalid = editSize === 'custom' && !customSizeValidation.valid;
 
     // Disable streaming when editN > 1 (OpenAI limitation)
@@ -539,7 +537,10 @@ export function EditingForm({
                             {t('model')}
                         </Label>
                         <div className='flex items-center gap-4'>
-                            <Select value={editModel} onValueChange={(value) => setEditModel(value as EditingFormData['model'])} disabled={isLoading}>
+                            <Select
+                                value={editModel}
+                                onValueChange={(value) => setEditModel(value as EditingFormData['model'])}
+                                disabled={isLoading}>
                                 <SelectTrigger
                                     id='edit-model-select'
                                     className='w-[180px] rounded-md border border-white/20 bg-black text-white focus:border-white/50 focus:ring-white/50'>
@@ -558,9 +559,7 @@ export function EditingForm({
                                     <TooltipTrigger asChild>
                                         <Info className='h-4 w-4 cursor-help text-white/40 hover:text-white/60' />
                                     </TooltipTrigger>
-                                    <TooltipContent className='max-w-[280px]'>
-                                        {t('gptImage2EditInfo')}
-                                    </TooltipContent>
+                                    <TooltipContent className='max-w-[280px]'>{t('gptImage2EditInfo')}</TooltipContent>
                                 </Tooltip>
                             )}
                             <Tooltip>
@@ -571,7 +570,7 @@ export function EditingForm({
                                             checked={enableStreaming}
                                             onCheckedChange={(checked) => setEnableStreaming(!!checked)}
                                             disabled={isLoading || editN[0] > 1}
-                                            className='border-white/40 data-[state=checked]:border-white data-[state=checked]:bg-white data-[state=checked]:text-black disabled:cursor-not-allowed disabled:opacity-50'
+                                            className='border-white/40 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-white data-[state=checked]:bg-white data-[state=checked]:text-black'
                                         />
                                         <Label
                                             htmlFor='edit-enable-streaming'
@@ -581,9 +580,7 @@ export function EditingForm({
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent className='max-w-[250px]'>
-                                    {editN[0] > 1
-                                        ? t('streamingSingleOnly')
-                                        : t('streamingHelp')}
+                                    {editN[0] > 1 ? t('streamingSingleOnly') : t('streamingHelp')}
                                 </TooltipContent>
                             </Tooltip>
                         </div>
@@ -597,9 +594,7 @@ export function EditingForm({
                                     <TooltipTrigger asChild>
                                         <HelpCircle className='h-4 w-4 cursor-help text-white/40 hover:text-white/60' />
                                     </TooltipTrigger>
-                                    <TooltipContent className='max-w-[250px]'>
-                                        {t('previewCostHelp')}
-                                    </TooltipContent>
+                                    <TooltipContent className='max-w-[250px]'>{t('previewCostHelp')}</TooltipContent>
                                 </Tooltip>
                             </div>
                             <RadioGroup
@@ -642,9 +637,17 @@ export function EditingForm({
                     )}
 
                     <div className='space-y-1.5'>
-                        <Label htmlFor='edit-prompt' className='text-white'>
-                            {t('prompt')}
-                        </Label>
+                        <div className='flex items-center justify-between gap-3'>
+                            <Label htmlFor='edit-prompt' className='text-white'>
+                                {t('prompt')}
+                            </Label>
+                            <PromptTemplateLibrary
+                                mode='edit'
+                                prompt={editPrompt}
+                                onApply={setEditPrompt}
+                                disabled={isLoading}
+                            />
+                        </div>
                         <Textarea
                             id='edit-prompt'
                             placeholder={t('editPromptPlaceholder')}
@@ -724,9 +727,7 @@ export function EditingForm({
 
                         {editShowMaskEditor && firstImagePreviewUrl && editOriginalImageSize && (
                             <div className='space-y-3 rounded-md border border-white/20 bg-black p-3'>
-                                <p className='text-xs text-white/60'>
-                                    {t('maskInstruction')}
-                                </p>
+                                <p className='text-xs text-white/60'>{t('maskInstruction')}</p>
                                 <div
                                     className='relative mx-auto w-full overflow-hidden rounded border border-white/10'
                                     style={{
@@ -840,7 +841,9 @@ export function EditingForm({
                             </div>
                         )}
                         {!editShowMaskEditor && editGeneratedMaskFile && (
-                            <p className='pt-1 text-xs text-green-400'>{t('maskApplied')}: {editGeneratedMaskFile.name}</p>
+                            <p className='pt-1 text-xs text-green-400'>
+                                {t('maskApplied')}: {editGeneratedMaskFile.name}
+                            </p>
                         )}
                     </div>
 
@@ -939,7 +942,8 @@ export function EditingForm({
                                 </div>
                                 <p className='text-xs text-white/50'>
                                     {(editCustomWidth * editCustomHeight).toLocaleString()} {t('pixels')} (
-                                    {((editCustomWidth * editCustomHeight) / 8_294_400 * 100).toFixed(1)}% {t('ofMax')}) -{' '}
+                                    {(((editCustomWidth * editCustomHeight) / 8_294_400) * 100).toFixed(1)}%{' '}
+                                    {t('ofMax')}) -{' '}
                                     {editCustomWidth > 0 && editCustomHeight > 0
                                         ? `${(Math.max(editCustomWidth, editCustomHeight) / Math.min(editCustomWidth, editCustomHeight)).toFixed(2)}:1 ${t('ratio')}`
                                         : '—'}
@@ -947,9 +951,7 @@ export function EditingForm({
                                 {!customSizeValidation.valid && (
                                     <p className='text-xs text-red-400'>{customSizeValidation.reason}</p>
                                 )}
-                                <p className='text-xs text-white/40'>
-                                    {t('constraints')}
-                                </p>
+                                <p className='text-xs text-white/40'>{t('constraints')}</p>
                             </div>
                         )}
                     </div>
@@ -963,7 +965,12 @@ export function EditingForm({
                             className='flex flex-wrap gap-x-5 gap-y-3'>
                             <RadioItemWithIcon value='auto' id='edit-quality-auto' label={t('auto')} Icon={Sparkles} />
                             <RadioItemWithIcon value='low' id='edit-quality-low' label={t('low')} Icon={Tally1} />
-                            <RadioItemWithIcon value='medium' id='edit-quality-medium' label={t('medium')} Icon={Tally2} />
+                            <RadioItemWithIcon
+                                value='medium'
+                                id='edit-quality-medium'
+                                label={t('medium')}
+                                Icon={Tally2}
+                            />
                             <RadioItemWithIcon value='high' id='edit-quality-high' label={t('high')} Icon={Tally3} />
                         </RadioGroup>
                     </div>

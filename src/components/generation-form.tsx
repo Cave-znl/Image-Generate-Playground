@@ -1,6 +1,7 @@
 'use client';
 
 import { ModeToggle } from '@/components/mode-toggle';
+import { PromptTemplateLibrary } from '@/components/prompt-template-library';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { GENERATE_IMAGE_MODELS, type GenerateImageModel } from '@/lib/cost-utils';
 import { useI18n } from '@/lib/i18n';
 import { getPresetTooltip, validateGptImage2Size } from '@/lib/size-utils';
+import type { SizePreset } from '@/lib/size-utils';
 import {
     Square,
     RectangleHorizontal,
@@ -33,9 +36,6 @@ import {
     SquareDashed
 } from 'lucide-react';
 import * as React from 'react';
-
-import { GENERATE_IMAGE_MODELS, type GenerateImageModel } from '@/lib/cost-utils';
-import type { SizePreset } from '@/lib/size-utils';
 
 export type GenerationFormData = {
     prompt: string;
@@ -225,7 +225,10 @@ export function GenerationForm({
                             {t('model')}
                         </Label>
                         <div className='flex items-center gap-4'>
-                            <Select value={model} onValueChange={(value) => setModel(value as GenerationFormData['model'])} disabled={isLoading}>
+                            <Select
+                                value={model}
+                                onValueChange={(value) => setModel(value as GenerationFormData['model'])}
+                                disabled={isLoading}>
                                 <SelectTrigger
                                     id='model-select'
                                     className='w-[180px] rounded-md border border-white/20 bg-black text-white focus:border-white/50 focus:ring-white/50'>
@@ -247,7 +250,7 @@ export function GenerationForm({
                                             checked={enableStreaming}
                                             onCheckedChange={(checked) => setEnableStreaming(!!checked)}
                                             disabled={isLoading || n[0] > 1}
-                                            className='border-white/40 data-[state=checked]:border-white data-[state=checked]:bg-white data-[state=checked]:text-black disabled:cursor-not-allowed disabled:opacity-50'
+                                            className='border-white/40 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-white data-[state=checked]:bg-white data-[state=checked]:text-black'
                                         />
                                         <Label
                                             htmlFor='enable-streaming'
@@ -257,9 +260,7 @@ export function GenerationForm({
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent className='max-w-[250px]'>
-                                    {n[0] > 1
-                                        ? t('streamingSingleOnly')
-                                        : t('streamingHelp')}
+                                    {n[0] > 1 ? t('streamingSingleOnly') : t('streamingHelp')}
                                 </TooltipContent>
                             </Tooltip>
                         </div>
@@ -273,9 +274,7 @@ export function GenerationForm({
                                     <TooltipTrigger asChild>
                                         <HelpCircle className='h-4 w-4 cursor-help text-white/40 hover:text-white/60' />
                                     </TooltipTrigger>
-                                    <TooltipContent className='max-w-[250px]'>
-                                        {t('previewCostHelp')}
-                                    </TooltipContent>
+                                    <TooltipContent className='max-w-[250px]'>{t('previewCostHelp')}</TooltipContent>
                                 </Tooltip>
                             </div>
                             <RadioGroup
@@ -318,9 +317,17 @@ export function GenerationForm({
                     )}
 
                     <div className='space-y-1.5'>
-                        <Label htmlFor='prompt' className='text-white'>
-                            {t('prompt')}
-                        </Label>
+                        <div className='flex items-center justify-between gap-3'>
+                            <Label htmlFor='prompt' className='text-white'>
+                                {t('prompt')}
+                            </Label>
+                            <PromptTemplateLibrary
+                                mode='generate'
+                                prompt={prompt}
+                                onApply={setPrompt}
+                                disabled={isLoading}
+                            />
+                        </div>
                         <Textarea
                             id='prompt'
                             placeholder={t('generatePromptPlaceholder')}
@@ -443,7 +450,7 @@ export function GenerationForm({
                                 </div>
                                 <p className='text-xs text-white/50'>
                                     {(customWidth * customHeight).toLocaleString()} {t('pixels')} (
-                                    {((customWidth * customHeight) / 8_294_400 * 100).toFixed(1)}% {t('ofMax')}) -{' '}
+                                    {(((customWidth * customHeight) / 8_294_400) * 100).toFixed(1)}% {t('ofMax')}) -{' '}
                                     {customWidth > 0 && customHeight > 0
                                         ? `${(Math.max(customWidth, customHeight) / Math.min(customWidth, customHeight)).toFixed(2)}:1 ${t('ratio')}`
                                         : '—'}
@@ -451,9 +458,7 @@ export function GenerationForm({
                                 {!customSizeValidation.valid && (
                                     <p className='text-xs text-red-400'>{customSizeValidation.reason}</p>
                                 )}
-                                <p className='text-xs text-white/40'>
-                                    {t('constraints')}
-                                </p>
+                                <p className='text-xs text-white/40'>{t('constraints')}</p>
                             </div>
                         )}
                     </div>

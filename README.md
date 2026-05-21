@@ -176,6 +176,16 @@ location ~ /\.(?!well-known) {
 
 本仓库会根据自身部署和使用需求继续演进，相关二次开发内容会在后续版本中逐步完善。
 
+## Prompt Template Library
+
+The app now includes a prompt template library for both generation and editing workflows.
+
+- Open it from the prompt field via the Templates button.
+- Browse templates by category, including product, portrait, scene, style, edit, and utility.
+- Search across template titles, descriptions, tags, and prompt content.
+- Use a template to replace the current prompt, or append it to the existing prompt.
+- Chinese UI mode shows localized template titles, descriptions, tags, categories, and prompt text.
+
 ## License
 
 MIT
