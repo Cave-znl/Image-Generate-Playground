@@ -1,6 +1,7 @@
 'use client';
 
 import { ModeToggle } from '@/components/mode-toggle';
+import { PromptOptimizerButton } from '@/components/prompt-optimizer-button';
 import { PromptTemplateLibrary } from '@/components/prompt-template-library';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -641,12 +642,19 @@ export function EditingForm({
                             <Label htmlFor='edit-prompt' className='text-white'>
                                 {t('prompt')}
                             </Label>
-                            <PromptTemplateLibrary
-                                mode='edit'
-                                prompt={editPrompt}
-                                onApply={setEditPrompt}
-                                disabled={isLoading}
-                            />
+                            <div className='flex items-center gap-2'>
+                                <PromptOptimizerButton
+                                    prompt={editPrompt}
+                                    onOptimizedPrompt={setEditPrompt}
+                                    disabled={isLoading}
+                                />
+                                <PromptTemplateLibrary
+                                    mode='edit'
+                                    prompt={editPrompt}
+                                    onApply={setEditPrompt}
+                                    disabled={isLoading}
+                                />
+                            </div>
                         </div>
                         <Textarea
                             id='edit-prompt'

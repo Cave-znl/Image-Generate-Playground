@@ -1,6 +1,7 @@
 'use client';
 
 import { ModeToggle } from '@/components/mode-toggle';
+import { PromptOptimizerButton } from '@/components/prompt-optimizer-button';
 import { PromptTemplateLibrary } from '@/components/prompt-template-library';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -321,12 +322,19 @@ export function GenerationForm({
                             <Label htmlFor='prompt' className='text-white'>
                                 {t('prompt')}
                             </Label>
-                            <PromptTemplateLibrary
-                                mode='generate'
-                                prompt={prompt}
-                                onApply={setPrompt}
-                                disabled={isLoading}
-                            />
+                            <div className='flex items-center gap-2'>
+                                <PromptOptimizerButton
+                                    prompt={prompt}
+                                    onOptimizedPrompt={setPrompt}
+                                    disabled={isLoading}
+                                />
+                                <PromptTemplateLibrary
+                                    mode='generate'
+                                    prompt={prompt}
+                                    onApply={setPrompt}
+                                    disabled={isLoading}
+                                />
+                            </div>
                         </div>
                         <Textarea
                             id='prompt'
