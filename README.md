@@ -36,6 +36,7 @@ Image Generate Playground 更偏向个人或团队自部署场景：
 - 蒙版编辑：支持通过蒙版限定编辑区域
 - 提示词模板库：生成和编辑模式均可从提示词输入区打开模板库，支持分类浏览、搜索、替换当前提示词或追加到现有提示词；中文界面会显示本地化模板标题、描述、标签和提示词正文
 - AI 提示词优化：可一键调用聊天补全模型优化当前提示词，优化过程中按钮会显示等待状态并禁止重复点击
+- 图片反推提示词：可上传 JPEG、PNG 或 WebP 图片，通过支持视觉输入的 GPT5.5 兼容接口生成可复用的生图提示词，并直接填入当前提示词输入框
 - 参数控制：尺寸、质量、格式、压缩、背景、审核、生成数量等
 - 自定义尺寸：支持 `gpt-image-2` 的 2K/4K 与自定义分辨率
 - 下载原图：可直接下载当前选中的最终原图
@@ -151,10 +152,10 @@ location / {
 | `GROK_API_KEY`                   | 否   | Grok 图像模型接口密钥，使用 `grok-imagine-image` 或 `grok-imagine-image-edit` 时需要；Grok 请求会强制要求返回 `b64_json` |
 | `OPENAI_API_BASE_URL`            | 否   | OpenAI 兼容接口地址，不填则使用默认 OpenAI 接口                                                                          |
 | `NEXT_PUBLIC_IMAGE_STORAGE_MODE` | 否   | 图片存储模式，支持 `fs` 或 `indexeddb`                                                                                   |
-| `PROMPT_OPTIMIZER_API_KEY`       | 否   | AI 提示词优化接口密钥；未配置时无法使用提示词优化按钮                                                                    |
-| `PROMPT_OPTIMIZER_API_URL`       | 否   | AI 提示词优化接口地址，默认 `https://api.hyhawang.com/v1/chat/completions`                                               |
-| `PROMPT_OPTIMIZER_MODEL`         | 否   | AI 提示词优化模型，默认 `gpt-5.5`                                                                                        |
-| `APP_PASSWORD`                   | 否   | 设置后前端请求需要输入访问密码                                                                                           |
+| `PROMPT_OPTIMIZER_API_KEY`       | 否   | AI 提示词优化与图片反推提示词接口密钥；未配置时无法使用相关按钮                                                          |
+| `PROMPT_OPTIMIZER_API_URL`       | 否   | AI 提示词优化与图片反推提示词接口地址，默认 `https://api.hyhawang.com/v1/chat/completions`                               |
+| `PROMPT_OPTIMIZER_MODEL`         | 否   | AI 提示词优化与图片反推提示词模型，默认 `gpt-5.5`；图片反推要求该接口支持 OpenAI 兼容的视觉输入                           |
+| `APP_PASSWORD`                   | 否   | 设置后前端请求需要输入访问密码；生图、删图、AI 提示词优化和图片反推提示词都会进行校验                                    |
 
 注意：不要把 `OPENAI_API_KEY`、`GROK_API_KEY`、`APP_PASSWORD` 写入任何 `NEXT_PUBLIC_` 开头的变量。
 

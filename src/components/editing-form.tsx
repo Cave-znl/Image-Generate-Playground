@@ -1,6 +1,7 @@
 'use client';
 
 import { ModeToggle } from '@/components/mode-toggle';
+import { ImagePromptButton } from '@/components/image-prompt-button';
 import { PromptOptimizerButton } from '@/components/prompt-optimizer-button';
 import { PromptTemplateLibrary } from '@/components/prompt-template-library';
 import { Button } from '@/components/ui/button';
@@ -67,6 +68,7 @@ type EditingFormProps = {
     isPasswordRequiredByBackend: boolean | null;
     clientPasswordHash: string | null;
     onOpenPasswordDialog: () => void;
+    onPasswordRequired: (retry: (passwordHash: string) => Promise<void>) => void;
     editModel: EditingFormData['model'];
     setEditModel: React.Dispatch<React.SetStateAction<EditingFormData['model']>>;
     imageFiles: File[];
@@ -138,6 +140,7 @@ export function EditingForm({
     isPasswordRequiredByBackend,
     clientPasswordHash,
     onOpenPasswordDialog,
+    onPasswordRequired,
     editModel,
     setEditModel,
     imageFiles,
@@ -643,9 +646,19 @@ export function EditingForm({
                                 {t('prompt')}
                             </Label>
                             <div className='flex items-center gap-2'>
+                                <ImagePromptButton
+                                    onPromptGenerated={setEditPrompt}
+                                    isPasswordRequiredByBackend={isPasswordRequiredByBackend}
+                                    clientPasswordHash={clientPasswordHash}
+                                    onPasswordRequired={onPasswordRequired}
+                                    disabled={isLoading}
+                                />
                                 <PromptOptimizerButton
                                     prompt={editPrompt}
                                     onOptimizedPrompt={setEditPrompt}
+                                    isPasswordRequiredByBackend={isPasswordRequiredByBackend}
+                                    clientPasswordHash={clientPasswordHash}
+                                    onPasswordRequired={onPasswordRequired}
                                     disabled={isLoading}
                                 />
                                 <PromptTemplateLibrary

@@ -8,6 +8,9 @@ import * as React from 'react';
 type PromptOptimizerButtonProps = {
     prompt: string;
     onOptimizedPrompt: (prompt: string) => void;
+    isPasswordRequiredByBackend: boolean | null;
+    clientPasswordHash: string | null;
+    onPasswordRequired: (retry: (passwordHash: string) => Promise<void>) => void;
     disabled?: boolean;
 };
 
@@ -26,12 +29,19 @@ const copy = {
     }
 } as const;
 
-export function PromptOptimizerButton({ prompt, onOptimizedPrompt, disabled }: PromptOptimizerButtonProps) {
+export function PromptOptimizerButton({
+    prompt,
+    onOptimizedPrompt,
+    isPasswordRequiredByBackend,
+    clientPasswordHash,
+    onPasswordRequired,
+    disabled
+}: PromptOptimizerButtonProps) {
     const { locale } = useI18n();
     const text = copy[locale];
     const [isOptimizing, setIsOptimizing] = React.useState(false);
 
-    const handleOptimize = async () => {
+    const handleOptimize = React.useCallback(async (passwordHashOverride?: string) => {
         if (isOptimizing) return;
 
         const currentPrompt = prompt.trim();
@@ -40,17 +50,35 @@ export function PromptOptimizerButton({ prompt, onOptimizedPrompt, disabled }: P
             return;
         }
 
+        const effectivePasswordHash = passwordHashOverride ?? clientPasswordHash;
+
+        if (isPasswordRequiredByBackend && !effectivePasswordHash) {
+            onPasswordRequired(handleOptimize);
+            return;
+        }
+
         setIsOptimizing(true);
         try {
+            const payload: { prompt: string; locale: typeof locale; passwordHash?: string } = {
+                prompt: currentPrompt,
+                locale
+            };
+
+            if (isPasswordRequiredByBackend && effectivePasswordHash) {
+                payload.passwordHash = effectivePasswordHash;
+            }
+
             const response = await fetch('/api/prompt-optimize', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    prompt: currentPrompt,
-                    locale
-                })
+                body: JSON.stringify(payload)
             });
             const result = (await response.json()) as { prompt?: string; error?: string };
+
+            if (response.status === 401 && isPasswordRequiredByBackend) {
+                onPasswordRequired(handleOptimize);
+                return;
+            }
 
             if (!response.ok || !result.prompt) {
                 throw new Error(result.error || text.failed);
@@ -63,7 +91,17 @@ export function PromptOptimizerButton({ prompt, onOptimizedPrompt, disabled }: P
         } finally {
             setIsOptimizing(false);
         }
-    };
+    }, [
+        clientPasswordHash,
+        isOptimizing,
+        isPasswordRequiredByBackend,
+        locale,
+        onOptimizedPrompt,
+        onPasswordRequired,
+        prompt,
+        text.emptyPrompt,
+        text.failed
+    ]);
 
     return (
         <Button
@@ -71,7 +109,7 @@ export function PromptOptimizerButton({ prompt, onOptimizedPrompt, disabled }: P
             variant='outline'
             size='sm'
             disabled={disabled || isOptimizing || !prompt.trim()}
-            onClick={handleOptimize}
+            onClick={() => handleOptimize()}
             className='h-8 border-white/20 px-2.5 text-white/80 hover:bg-white/10 hover:text-white disabled:border-white/10 disabled:text-white/35'>
             {isOptimizing ? <Loader2 className='h-4 w-4 animate-spin' /> : <WandSparkles className='h-4 w-4' />}
             <span className='hidden sm:inline'>{isOptimizing ? text.optimizing : text.optimize}</span>

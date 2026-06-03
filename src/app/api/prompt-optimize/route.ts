@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 const PROMPT_OPTIMIZER_API_URL = process.env.PROMPT_OPTIMIZER_API_URL || 'https://api.hyhawang.com/v1/chat/completions';
 const PROMPT_OPTIMIZER_MODEL = process.env.PROMPT_OPTIMIZER_MODEL || 'gpt-5.5';
@@ -127,6 +128,10 @@ type ChatCompletionResponse = {
     };
 };
 
+function sha256(data: string): string {
+    return crypto.createHash('sha256').update(data).digest('hex');
+}
+
 export async function POST(request: NextRequest) {
     try {
         const apiKey = process.env.PROMPT_OPTIMIZER_API_KEY;
@@ -137,7 +142,22 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const body = (await request.json()) as { prompt?: unknown; locale?: unknown };
+        const body = (await request.json()) as { prompt?: unknown; locale?: unknown; passwordHash?: unknown };
+
+        if (process.env.APP_PASSWORD) {
+            const clientPasswordHash = typeof body.passwordHash === 'string' ? body.passwordHash : null;
+            if (!clientPasswordHash) {
+                console.error('Missing password hash for prompt optimization.');
+                return NextResponse.json({ error: 'Unauthorized: Missing password hash.' }, { status: 401 });
+            }
+
+            const serverPasswordHash = sha256(process.env.APP_PASSWORD);
+            if (clientPasswordHash !== serverPasswordHash) {
+                console.error('Invalid password hash for prompt optimization.');
+                return NextResponse.json({ error: 'Unauthorized: Invalid password.' }, { status: 401 });
+            }
+        }
+
         const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
         const locale = body.locale === 'zh' ? 'zh' : 'en';
 

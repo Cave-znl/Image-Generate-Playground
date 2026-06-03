@@ -84,6 +84,9 @@ export default function HomePage() {
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
     const [passwordDialogContext, setPasswordDialogContext] = React.useState<'initial' | 'retry'>('initial');
     const [lastApiCallArgs, setLastApiCallArgs] = React.useState<[GenerationFormData | EditingFormData] | null>(null);
+    const [pendingPasswordRetry, setPendingPasswordRetry] = React.useState<
+        ((passwordHash: string) => Promise<void>) | null
+    >(null);
     const [skipDeleteConfirmation, setSkipDeleteConfirmation] = React.useState<boolean>(false);
     const [itemToDeleteConfirm, setItemToDeleteConfirm] = React.useState<HistoryMetadata | null>(null);
     const [dialogCheckboxStateSkipConfirm, setDialogCheckboxStateSkipConfirm] = React.useState<boolean>(false);
@@ -285,8 +288,12 @@ export default function HomePage() {
             setClientPasswordHash(hash);
             setError(null);
             setIsPasswordDialogOpen(false);
-            if (passwordDialogContext === 'retry' && lastApiCallArgs) {
-                await handleApiCall(...lastApiCallArgs);
+            if (passwordDialogContext === 'retry' && pendingPasswordRetry) {
+                const retry = pendingPasswordRetry;
+                setPendingPasswordRetry(null);
+                await retry(hash);
+            } else if (passwordDialogContext === 'retry' && lastApiCallArgs) {
+                await handleApiCall(...lastApiCallArgs, hash);
             }
         } catch (e) {
             console.error('Error hashing password:', e);
@@ -296,8 +303,16 @@ export default function HomePage() {
 
     const handleOpenPasswordDialog = () => {
         setPasswordDialogContext('initial');
+        setPendingPasswordRetry(null);
         setIsPasswordDialogOpen(true);
     };
+
+    const handlePasswordRequired = React.useCallback((retry: (passwordHash: string) => Promise<void>) => {
+        setError('Unauthorized: Invalid or missing password. Please try again.');
+        setPasswordDialogContext('retry');
+        setPendingPasswordRetry(() => retry);
+        setIsPasswordDialogOpen(true);
+    }, []);
 
     const getMimeTypeFromFormat = (format: string): string => {
         if (format === 'jpeg') return 'image/jpeg';
@@ -306,7 +321,7 @@ export default function HomePage() {
         return 'image/png';
     };
 
-    const handleApiCall = async (formData: GenerationFormData | EditingFormData) => {
+    const handleApiCall = async (formData: GenerationFormData | EditingFormData, passwordHashOverride?: string) => {
         const startTime = Date.now();
         let durationMs = 0;
 
@@ -317,9 +332,10 @@ export default function HomePage() {
         setStreamingPreviewImages(new Map());
 
         const apiFormData = new FormData();
-        if (isPasswordRequiredByBackend && clientPasswordHash) {
-            apiFormData.append('passwordHash', clientPasswordHash);
-        } else if (isPasswordRequiredByBackend && !clientPasswordHash) {
+        const effectivePasswordHash = passwordHashOverride ?? clientPasswordHash;
+        if (isPasswordRequiredByBackend && effectivePasswordHash) {
+            apiFormData.append('passwordHash', effectivePasswordHash);
+        } else if (isPasswordRequiredByBackend && !effectivePasswordHash) {
             setError('Password is required. Please configure the password by clicking the lock icon.');
             setPasswordDialogContext('initial');
             setIsPasswordDialogOpen(true);
@@ -897,6 +913,7 @@ export default function HomePage() {
                                 isPasswordRequiredByBackend={isPasswordRequiredByBackend}
                                 clientPasswordHash={clientPasswordHash}
                                 onOpenPasswordDialog={handleOpenPasswordDialog}
+                                onPasswordRequired={handlePasswordRequired}
                                 model={genModel}
                                 setModel={setGenModel}
                                 prompt={genPrompt}
@@ -934,6 +951,7 @@ export default function HomePage() {
                                 isPasswordRequiredByBackend={isPasswordRequiredByBackend}
                                 clientPasswordHash={clientPasswordHash}
                                 onOpenPasswordDialog={handleOpenPasswordDialog}
+                                onPasswordRequired={handlePasswordRequired}
                                 editModel={editModel}
                                 setEditModel={setEditModel}
                                 imageFiles={editImageFiles}
