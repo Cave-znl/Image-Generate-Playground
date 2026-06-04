@@ -102,6 +102,10 @@ function createImageClient(model: string): OpenAI {
     });
 }
 
+function describeUploadedFile(file: File): string {
+    return `${file.name || 'unnamed'} (${file.type || 'unknown type'}, ${file.size} bytes)`;
+}
+
 function resolveImageBuffer(
     imageData: NonNullable<OpenAI.Images.ImagesResponse['data']>[number],
     index: number
@@ -350,6 +354,12 @@ export async function POST(request: NextRequest) {
             }
 
             const maskFile = formData.get('mask') as File | null;
+            console.log(
+                'Edit upload files:',
+                imageFiles.map((file) => describeUploadedFile(file)).join(', '),
+                'Mask:',
+                maskFile ? describeUploadedFile(maskFile) : 'N/A'
+            );
 
             const baseEditParams: ImageEditParamsWithResponseFormat = {
                 model: model as OpenAI.Images.ImageEditParams['model'],

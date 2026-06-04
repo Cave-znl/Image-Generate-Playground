@@ -40,6 +40,7 @@ type DrawnPoint = {
 };
 
 const MAX_EDIT_IMAGES = 10;
+const MAX_MASK_EDIT_DIMENSION = 2048;
 
 const explicitModeClient = process.env.NEXT_PUBLIC_IMAGE_STORAGE_MODE;
 
@@ -321,6 +322,84 @@ export default function HomePage() {
         return 'image/png';
     };
 
+    const loadImageFromFile = (file: File): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+            const image = new window.Image();
+            const objectUrl = URL.createObjectURL(file);
+
+            image.onload = () => {
+                URL.revokeObjectURL(objectUrl);
+                resolve(image);
+            };
+            image.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
+                reject(new Error(`Failed to load image file: ${file.name}`));
+            };
+            image.src = objectUrl;
+        });
+    };
+
+    const canvasToPngFile = (canvas: HTMLCanvasElement, filename: string): Promise<File> => {
+        return new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    reject(new Error(`Failed to create normalized PNG: ${filename}`));
+                    return;
+                }
+
+                resolve(new File([blob], filename, { type: 'image/png' }));
+            }, 'image/png');
+        });
+    };
+
+    const normalizeMaskedEditFiles = async (
+        imageFiles: File[],
+        maskFile: File
+    ): Promise<{ imageFiles: File[]; maskFile: File }> => {
+        if (imageFiles.length === 0) {
+            return { imageFiles, maskFile };
+        }
+
+        const sourceImage = await loadImageFromFile(imageFiles[0]);
+        const maskImage = await loadImageFromFile(maskFile);
+
+        if (sourceImage.naturalWidth !== maskImage.naturalWidth || sourceImage.naturalHeight !== maskImage.naturalHeight) {
+            throw new Error(
+                `Mask dimensions (${maskImage.naturalWidth}x${maskImage.naturalHeight}) must match the source image dimensions (${sourceImage.naturalWidth}x${sourceImage.naturalHeight}).`
+            );
+        }
+
+        const scale = Math.min(1, MAX_MASK_EDIT_DIMENSION / Math.max(sourceImage.naturalWidth, sourceImage.naturalHeight));
+        const width = Math.max(1, Math.round(sourceImage.naturalWidth * scale));
+        const height = Math.max(1, Math.round(sourceImage.naturalHeight * scale));
+
+        const sourceCanvas = document.createElement('canvas');
+        sourceCanvas.width = width;
+        sourceCanvas.height = height;
+        const sourceCtx = sourceCanvas.getContext('2d');
+        if (!sourceCtx) {
+            throw new Error('Failed to normalize source image.');
+        }
+        sourceCtx.drawImage(sourceImage, 0, 0, width, height);
+
+        const maskCanvas = document.createElement('canvas');
+        maskCanvas.width = width;
+        maskCanvas.height = height;
+        const maskCtx = maskCanvas.getContext('2d');
+        if (!maskCtx) {
+            throw new Error('Failed to normalize mask image.');
+        }
+        maskCtx.drawImage(maskImage, 0, 0, width, height);
+
+        const normalizedSourceFile = await canvasToPngFile(sourceCanvas, 'normalized-source.png');
+        const normalizedMaskFile = await canvasToPngFile(maskCanvas, 'normalized-mask.png');
+
+        return {
+            imageFiles: [normalizedSourceFile, ...imageFiles.slice(1)],
+            maskFile: normalizedMaskFile
+        };
+    };
+
     const handleApiCall = async (formData: GenerationFormData | EditingFormData, passwordHashOverride?: string) => {
         const startTime = Date.now();
         let durationMs = 0;
@@ -381,11 +460,30 @@ export default function HomePage() {
             apiFormData.append('size', editSizeToSend);
             apiFormData.append('quality', editQuality);
 
-            editImageFiles.forEach((file, index) => {
+            let imageFilesToSend = editImageFiles;
+            let maskFileToSend = editGeneratedMaskFile;
+
+            if (editGeneratedMaskFile) {
+                try {
+                    const normalizedFiles = await normalizeMaskedEditFiles(editImageFiles, editGeneratedMaskFile);
+                    imageFilesToSend = normalizedFiles.imageFiles;
+                    maskFileToSend = normalizedFiles.maskFile;
+                } catch (err) {
+                    durationMs = Date.now() - startTime;
+                    console.error(`Mask normalization error after ${durationMs}ms:`, err);
+                    setError(err instanceof Error ? err.message : 'Failed to normalize the mask before editing.');
+                    setLatestImageBatch(null);
+                    setStreamingPreviewImages(new Map());
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
+            imageFilesToSend.forEach((file, index) => {
                 apiFormData.append(`image_${index}`, file, file.name);
             });
-            if (editGeneratedMaskFile) {
-                apiFormData.append('mask', editGeneratedMaskFile, editGeneratedMaskFile.name);
+            if (maskFileToSend) {
+                apiFormData.append('mask', maskFileToSend, maskFileToSend.name);
             }
         }
 
