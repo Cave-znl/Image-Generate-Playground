@@ -85,6 +85,7 @@ npm install
 OPENAI_API_KEY=your_gpt_api_key_here
 GROK_API_KEY=your_grok_api_key_here
 OPENAI_API_BASE_URL=https://your-compatible-api.example.com/v1
+OPENAI_IMAGE_API_TIMEOUT_MS=900000
 NEXT_PUBLIC_IMAGE_STORAGE_MODE=fs
 PROMPT_OPTIMIZER_API_KEY=your_prompt_optimizer_api_key_here
 
@@ -138,8 +139,10 @@ location / {
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
-    proxy_read_timeout 300s;
-    proxy_send_timeout 300s;
+    proxy_connect_timeout 900s;
+    proxy_read_timeout 900s;
+    proxy_send_timeout 900s;
+    send_timeout 900s;
     proxy_buffering off;
 }
 ```
@@ -151,6 +154,7 @@ location / {
 | `OPENAI_API_KEY`                 | 是   | GPT 图像模型接口密钥                                                                                                     |
 | `GROK_API_KEY`                   | 否   | Grok 图像模型接口密钥，使用 `grok-imagine-image` 或 `grok-imagine-image-edit` 时需要；Grok 请求会强制要求返回 `b64_json` |
 | `OPENAI_API_BASE_URL`            | 否   | OpenAI 兼容接口地址，不填则使用默认 OpenAI 接口                                                                          |
+| `OPENAI_IMAGE_API_TIMEOUT_MS`    | 否   | 图像生成与编辑接口等待上游返回的超时时间，单位毫秒，默认 `900000`；反向代理超时时间应不小于该值                         |
 | `NEXT_PUBLIC_IMAGE_STORAGE_MODE` | 否   | 图片存储模式，支持 `fs` 或 `indexeddb`                                                                                   |
 | `PROMPT_OPTIMIZER_API_KEY`       | 否   | AI 提示词优化与图片反推提示词接口密钥；未配置时无法使用相关按钮                                                          |
 | `PROMPT_OPTIMIZER_API_URL`       | 否   | AI 提示词优化与图片反推提示词接口地址，默认 `https://api.hyhawang.com/v1/chat/completions`                               |

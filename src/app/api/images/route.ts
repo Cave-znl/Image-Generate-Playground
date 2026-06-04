@@ -25,6 +25,7 @@ type StreamingEvent = {
 };
 
 const outputDir = path.resolve(process.cwd(), 'generated-images');
+const DEFAULT_IMAGE_API_TIMEOUT_MS = 15 * 60 * 1000;
 
 // Define valid output formats for type safety
 const VALID_OUTPUT_FORMATS = ['png', 'jpeg', 'webp'] as const;
@@ -89,6 +90,15 @@ function isGrokModel(model: string): boolean {
     return model.startsWith('grok-');
 }
 
+function getImageApiTimeoutMs(): number {
+    const configuredTimeout = Number(process.env.OPENAI_IMAGE_API_TIMEOUT_MS);
+    if (Number.isFinite(configuredTimeout) && configuredTimeout > 0) {
+        return configuredTimeout;
+    }
+
+    return DEFAULT_IMAGE_API_TIMEOUT_MS;
+}
+
 function createImageClient(model: string): OpenAI {
     const apiKey = getApiKeyForModel(model);
     if (!apiKey) {
@@ -96,9 +106,13 @@ function createImageClient(model: string): OpenAI {
         throw new Error(`Server configuration error: ${envName} is not set.`);
     }
 
+    const timeout = getImageApiTimeoutMs();
+    console.log(`Image API timeout: ${timeout}ms`);
+
     return new OpenAI({
         apiKey,
-        baseURL: process.env.OPENAI_API_BASE_URL
+        baseURL: process.env.OPENAI_API_BASE_URL,
+        timeout
     });
 }
 
